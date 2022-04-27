@@ -170,9 +170,12 @@ export class ZegoExpressManager {
   }
   leaveRoom(): Promise<void> {
     ZegoExpressEngine.instance().stopPublishingStream();
+    console.warn('ZEGO RN LOG - stopPublishingStream');
     ZegoExpressEngine.instance().stopPreview();
+    console.warn('ZEGO RN LOG - stopPreview');
     this.participantDic.forEach(participant => {
       ZegoExpressEngine.instance().stopPlayingStream(participant.streamID);
+      console.warn('ZEGO RN LOG - stopPlayingStream', participant.streamID);
     });
     this.participantDic.clear();
     this.streamDic.clear();
@@ -239,7 +242,7 @@ export class ZegoExpressManager {
 
     // The streamID can use any character.
     // For the convenience of query, roomID + UserID + suffix is used here.
-    const streamID = roomID + '_' + userID + '_main';
+    const streamID = roomID + userID + '_main';
     return streamID;
   }
   private onOtherEvent() {
