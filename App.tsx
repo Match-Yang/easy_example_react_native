@@ -27,6 +27,7 @@ import ZegoExpressEngine, {
   ZegoTextureView,
   ZegoScenario,
   ZegoUpdateType,
+  ZegoEngineProfile,
 } from 'zego-express-engine-reactnative';
 import {ZegoExpressManager} from './ZegoExpressManager';
 
@@ -46,9 +47,6 @@ const config = {
   // Get your AppID from ZEGOCLOUD Console
   //[My Projects] : https://console.zegocloud.com/project
   appID: AppID,
-  // Get your AppSign from ZEGOCLOUD Console
-  // [My Projects -> project's Edit -> Basic Configurations -> AppSign] : https://console.zegocloud.com/project"
-  appSign: AppSign,
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: 'room_1234567890',
@@ -116,7 +114,7 @@ const styles = StyleSheet.create({
     height: '25%',
     width: '40%',
     position: 'absolute',
-    top: 20,
+    top: 80,
     right: 20,
     zIndex: 2,
   },
@@ -196,9 +194,8 @@ export default class App extends Component<{}> {
     console.warn('init SDK');
     const profile = {
       appID: config.appID,
-      appSign: config.appSign,
       scenario: ZegoScenario.General,
-    };
+    } as ZegoEngineProfile;
     ZegoExpressManager.createEngine(profile).then(async () => {
       // Android: Dynamically obtaining device permissions
       if (Platform.OS === 'android') {
@@ -324,10 +321,12 @@ export default class App extends Component<{}> {
   };
 
   componentDidMount() {
+    console.warn('componentDidMount');
     this.initSDK();
   }
 
   componentWillUnmount() {
+    console.warn('componentWillUnmount');
     if (ZegoExpressEngine.instance()) {
       ZegoExpressEngine.destroyEngine();
     }
