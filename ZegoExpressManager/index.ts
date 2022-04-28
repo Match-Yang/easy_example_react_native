@@ -169,6 +169,7 @@ export class ZegoExpressManager {
     this.playStream(userID);
   }
   leaveRoom(): Promise<void> {
+    const roomID = this.roomID;
     ZegoExpressEngine.instance().stopPublishingStream();
     console.warn('ZEGO RN LOG - stopPublishingStream');
     ZegoExpressEngine.instance().stopPreview();
@@ -191,7 +192,7 @@ export class ZegoExpressManager {
     ];
 
     return ZegoExpressEngine.instance()
-      .logoutRoom(this.roomID)
+      .logoutRoom(roomID)
       .then(() => {
         console.warn('ZEGO RN LOG - logoutRoom success');
       });

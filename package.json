@@ -12,7 +12,7 @@
   "dependencies": {
     "react": "17.0.2",
     "react-native": "0.68.1",
-    "zego-express-engine-reactnative": "^0.17.2"
+    "zego-express-engine-reactnative": "^0.17.3"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

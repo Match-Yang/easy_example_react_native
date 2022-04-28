@@ -7123,7 +7123,7 @@ yargs@^15.1.0, yargs@^15.3.1, yargs@^15.4.1:
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
 
-zego-express-engine-reactnative@^0.17.2:
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/zego-express-engine-reactnative/-/zego-express-engine-reactnative-0.17.2.tgz#17b00db590d438e02a859e95ba4ae4968da73e30"
-  integrity sha512-2IJ+Eb/znpurrNDDgXTS4r8Gz8I+FrFMu+ftaB59pVjRclKnPa7BYBlamLzUvG33QfOtMebSFmMiOOudTf0nNg==
+zego-express-engine-reactnative@^0.17.3:
+  version "0.17.3"
+  resolved "https://registry.yarnpkg.com/zego-express-engine-reactnative/-/zego-express-engine-reactnative-0.17.3.tgz#fbe5699252e28d2ef1f46fb7570adab5b6f455cc"
+  integrity sha512-mwM2VRogxvX3s//8h70xUh3Q32VlBNJq856XQ3slMuiFVgHot/LT5K5roe/vJpiDQJl1uDzeU4sX4nTdMdJocA==
