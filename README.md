@@ -35,8 +35,6 @@ Clone the easy example Github repository.
 
 #### Modify the project configurations
 
-> ![config](media/init.png)
-
 * You need to modify `appID` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
 * [Generate a Token on your app server (recommended)](https://docs.zegocloud.com/article/11648), provide an interface for the client to call and replace the generateToken method above.
 
@@ -47,6 +45,9 @@ Clone the easy example Github repository.
 > Once done you will get an url for your instance, try accessing `https://<heroku url>/access_token?uid=1234` to check if it works.
 > 
 > Check [dynamic_token_server_nodejs](https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs) for more details.
+
+
+> ![config](media/init.jpg)
 
 #### Run on your device
 

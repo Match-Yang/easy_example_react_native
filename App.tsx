@@ -49,13 +49,14 @@ const config = {
   appID: AppID,
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
-  roomID: 'room_1234567890',
+  roomID: '123456',
+  tokerServerUrl: '', //  https://xxx.herokuapp.com
 };
 
 const generateToken = () => {
   // Obtain the token interface provided by the App Server
   return fetch(
-    `https://hello-test-zegocloud.herokuapp.com/access_token?uid=${config.userID}`,
+    `${config.tokerServerUrl}/access_token?uid=${config.userID}`,
     {
       method: 'GET',
       headers: {

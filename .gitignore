@@ -59,3 +59,10 @@ buck-out/
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
+
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/
+.yarnrc.yml
+ios/ZegoEasyExample.xcworkspace/xcshareddata/
+package-lock.json
