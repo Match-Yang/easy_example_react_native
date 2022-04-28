@@ -54,7 +54,15 @@ const config = {
 
 const generateToken = () => {
   // Obtain the token interface provided by the App Server
-  return Promise.resolve({data: {token: ''}});
+  return fetch(
+    `https://hello-test-zegocloud.herokuapp.com/access_token?uid=${config.userID}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+    },
+  ).then(data => data.json());
 };
 
 const styles = StyleSheet.create({
@@ -247,7 +255,7 @@ export default class App extends Component<{}> {
       ZegoExpressManager.instance().onRoomTokenWillExpire(
         async (roomID: string, remainTimeInSecond: number) => {
           console.warn('out roomTokenWillExpire', roomID, remainTimeInSecond);
-          const token = (await generateToken()).data.token;
+          const token = (await generateToken()).token;
           ZegoExpressEngine.instance().renewToken(roomID, token);
         },
       );
@@ -256,7 +264,7 @@ export default class App extends Component<{}> {
 
   // Join room
   joinRoom = async () => {
-    const token = (await generateToken()).data.token;
+    const token = (await generateToken()).token;
     ZegoExpressManager.instance()
       .joinRoom(config.roomID, token, {
         userID: config.userID,
