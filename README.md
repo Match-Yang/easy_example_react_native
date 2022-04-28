@@ -8,23 +8,47 @@ The following will describe how to start this project.
 
 ### Prerequisites
 
+#### Basic requirements
+
 * Refer to the [React Native website](https://reactnative.dev/docs/environment-setup) to configure the development environment.
 * Create a project in [ZEGOCLOUD Admin Console](https://console.zegocloud.com/). For details, see [ZEGO Admin Console - Project management](https://docs.zegocloud.com/article/1271).
 
-### Install
+#### To build an Android app:
 
-1. Clone the easy example Github repository.
-2. Open Terminal, navigate to the `easy_example_react_native` folder.
-3. Run the `yarn install` command to install all dependencies that are needed.
+* Android SDK packages: Android SDK 30, Android SDK Platform-Tools 30.x.x or later.
+* An Android device or Simulator that is running on Android 4.1 or later and supports audio and video. We recommend you use a real device (Remember to enable **USB debugging** for the device).
 
-### Modify the project configurations
+#### To build an iOS app:
 
-![config](media/init.png)
+* [Xcode 7.0 or later](https://developer.apple.com/xcode/download)
+* [CocoaPods](https://guides.cocoapods.org/using/getting-started.html#installation)
+* An iOS device or Simulator that is running on iOS 13.0 or later and supports audio and video. We recommend you use a real device.
+
+### Run the sample code
+
+Clone the easy example Github repository.
+
+#### Install dependencies
+
+1. Open Terminal, navigate to the `easy_example_react_native` folder.
+2. Run the `yarn install` command to install all dependencies that are needed.
+
+#### Modify the project configurations
+
+> ![config](media/init.png)
 
 * You need to modify `appID` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
 * [Generate a Token on your app server (recommended)](https://docs.zegocloud.com/article/11648), provide an interface for the client to call and replace the generateToken method above.
 
-### Run the sample code
+> If you are using Heroku for your backen service, you can deploy the token generation service by one click.
+>
+> [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs)
+>
+> Once done you will get an url for your instance, try accessing `https://<heroku url>/access_token?uid=1234` to check if it works.
+> 
+> Check [dynamic_token_server_nodejs](https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs) for more details.
+
+#### Run on your device
 
 Start the project locally with the following command.
 
@@ -44,20 +68,21 @@ The following will describe how to build your own project based on this project.
 
 Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your typescript project.
 
-![project](media/project.png)
+> ![project](media/project.png)
 
-### Install the latest SDK
+### Add dependencies to `package.json`
 
 ```json
 "dependencies": {
     "zego-express-engine-reactnative": "^0.17.3"
 }
 ```
+### Grant permission
 
-### Added microphone and camera permission Settings
+You need to grant the network access, camera, and microphone permission to make your APP work as except.
 
-#### iOS
-
+#### For iOS
+> ![image](media/grant_permission_ios.gif)
 ```plist
 <key>NSCameraUsageDescription</key>
 <string>We need to use your camera to help you join the voice interaction.</string>
@@ -65,8 +90,8 @@ Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your
 <string>We need to use your mic to help you join the voice interaction.</string>
 ```
 
-#### Android
-
+#### For Android
+> ![image](media/grant_permission_android.gif)
 ```xml
 <!-- Permissions required by the SDK --> 
 
@@ -95,7 +120,7 @@ createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpi
 
 #### Create engine
 
-Before using the SDK function, you need to create the SDK first. We recommend creating it when the application starts. The sample code is as follows:
+Before using any method of the SDK, you need to create an engine instance first. We recommend creating it when the application starts. The sample code is as follows:
 
 ```typescript
 const profile = {
