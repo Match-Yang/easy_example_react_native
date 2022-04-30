@@ -50,15 +50,40 @@ Clone the easy example Github repository.
 > ![config](media/init.jpg)
 
 #### Run on your device
-
-Start the project locally with the following command.
+1. For Android
 
 ```ssh
-# iOS
-yarn ios
+$ yarn android
+```
 
-# Android
-yarn android
+2. For iOS
+
+> **⚠️⚠️⚠️Ruby Version**
+>
+> For running on iOS device, please check if your ruby version is compatible with the `Gemfile`. If not, do the following steps:
+>
+> 1. Install rvm: https://rvm.io/
+> 2. Install ruby 2.7.4 and use it
+>```bash
+>$ rvm install 2.7.4
+>$ rvm use 2.7.4
+>```
+>3. Install cocoapods with gem
+>```bash
+>$ gem install cocoapods
+>```
+>4. Run pod install under `easy_example_react_native/ios`
+>```bash
+>pod install
+>```
+> **⚠️⚠️⚠️Signing**
+>
+> You need to open `ZegoEasyExample.xcworkspace` with `XCode` on the first time build.
+> Then select a development team in the Signing & Capabilities editor.
+
+When all the configuration is ready, run:
+```bash
+$ yarn ios
 ```
 
 ## Integrate the SDK into your own project
