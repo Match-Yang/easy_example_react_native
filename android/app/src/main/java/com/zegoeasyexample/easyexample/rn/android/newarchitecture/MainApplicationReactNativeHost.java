@@ -1,4 +1,4 @@
-package com.zegoeasyexample.newarchitecture;
+package im.zego.easyexample.rn.android.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -19,9 +19,9 @@ import com.facebook.react.fabric.CoreComponentsRegistry;
 import com.facebook.react.fabric.EmptyReactNativeConfig;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.zegoeasyexample.BuildConfig;
-import com.zegoeasyexample.newarchitecture.components.MainComponentsRegistry;
-import com.zegoeasyexample.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import im.zego.easyexample.rn.android.BuildConfig;
+import im.zego.easyexample.rn.android.newarchitecture.components.MainComponentsRegistry;
+import im.zego.easyexample.rn.android.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -119,15 +119,18 @@ export default class CallPage extends Component {
     roomID;
     userID;
     userName;
+    appData; // pass back to home page
     constructor(props) {
         super(props)
+        console.log('Call page: ', props)
         this.localViewRef = React.createRef();
         this.remoteViewRef = React.createRef();
-        this.appID = parseInt(props.appID);
-        this.token = props.token;
+        this.appID = parseInt(props.appData.appID);
+        this.token = props.appData.zegoToken;
         this.roomID = props.roomID;
-        this.userID = props.userID;
+        this.userID = props.appData.userID;
         this.userName = props.userName;
+        this.appData = props.appData;
 
     }
     state = {
@@ -161,6 +164,7 @@ export default class CallPage extends Component {
             (updateType, userList, roomID) => {
                 console.warn('out roomUserUpdate', updateType, userList, roomID);
                 if (updateType == ZegoUpdateType.Add) {
+                    console.log("&&&&&&&&&", this.remoteViewRef.current, findNodeHandle(this.remoteViewRef.current))
                     userList.forEach(userID => {
                         ZegoExpressManager.instance().setRemoteVideoView(
                             userID,
@@ -259,7 +263,7 @@ export default class CallPage extends Component {
             .then(() => {
                 console.warn('Leave successful');
                 // Back to home page
-                Actions.home();
+                Actions.home({appData: this.appData});
             });
     };
 

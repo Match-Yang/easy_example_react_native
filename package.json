@@ -10,6 +10,10 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@notifee/react-native": "^5.2.1",
+    "@react-native-firebase/app": "^14.9.2",
+    "@react-native-firebase/messaging": "^14.9.2",
+    "notifee": "^0.0.1",
     "react": "17.0.2",
     "react-native": "0.68.1",
     "react-native-gesture-handler": "^2.4.2",

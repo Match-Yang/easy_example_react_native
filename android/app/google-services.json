@@ -1,0 +1,126 @@
+{
+  "project_info": {
+    "project_number": "17907117774",
+    "project_id": "easyexample-7c37e",
+    "storage_bucket": "easyexample-7c37e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17907117774:android:67f7f70beed71736d4ea9f",
+        "android_client_info": {
+          "package_name": "im.zego.easyexample.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPRC_3CqRVi4vrA2WMs3_HAWQcbj3YuQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "17907117774-28beb97jpqd3b4epp3k3g97fv0at95d3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "im.zego.test"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17907117774:android:2da27bb364be0557d4ea9f",
+        "android_client_info": {
+          "package_name": "im.zego.easyexample.flutter.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPRC_3CqRVi4vrA2WMs3_HAWQcbj3YuQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "17907117774-28beb97jpqd3b4epp3k3g97fv0at95d3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "im.zego.test"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17907117774:android:f6eeb753f94803e3d4ea9f",
+        "android_client_info": {
+          "package_name": "im.zego.easyexample.rn.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "17907117774-02d12hbiois63l8c37chootg9b7a9lo2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "im.zego.easyexample.rn.android",
+            "certificate_hash": "e53ad67bf8befa35b01ff91c2e7402bf87dfbd7a"
+          }
+        },
+        {
+          "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPRC_3CqRVi4vrA2WMs3_HAWQcbj3YuQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "17907117774-vmljo891foq540l8vl99f8ljdbionfsv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "17907117774-28beb97jpqd3b4epp3k3g97fv0at95d3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "im.zego.test"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

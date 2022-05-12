@@ -1,4 +1,4 @@
-package com.zegoeasyexample;
+package im.zego.easyexample.rn.android;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
