@@ -9,6 +9,7 @@ import ZegoExpressEngine, {
   ZegoPublishStreamQuality,
   ZegoPlayStreamQuality,
   ZegoStream,
+  ZegoRoomState,
 } from 'zego-express-engine-reactnative';
 
 import {
@@ -24,12 +25,7 @@ export class ZegoExpressManager {
   private streamDic: Map<string, ZegoParticipant> = new Map();
   private localParticipant!: ZegoParticipant;
   private roomID = '';
-  private mediaOptions: ZegoMediaOptions[] = [
-    ZegoMediaOptions.AutoPlayAudio,
-    ZegoMediaOptions.AutoPlayVideo,
-    ZegoMediaOptions.PublishLocalAudio,
-    ZegoMediaOptions.PublishLocalVideo,
-  ];
+  private mediaOptions: ZegoMediaOptions[] = [];
   private deviceUpdateCallback: ((
     updateType: ZegoDeviceUpdateType,
     userID: string,
@@ -50,7 +46,9 @@ export class ZegoExpressManager {
     ZegoExpressManager.shared = new ZegoExpressManager();
     return ZegoExpressEngine.createEngineWithProfile(profile).then(
       (engine: ZegoExpressEngine) => {
-        console.warn('ZEGO RN LOG - createEngine success');
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][createEngineWithProfile] - Create success',
+        );
         ZegoExpressManager.shared.onOtherEvent();
         return engine;
       },
@@ -60,14 +58,22 @@ export class ZegoExpressManager {
     roomID: string,
     token: string,
     user: ZegoUser,
-    options?: ZegoMediaOptions[],
+    options: ZegoMediaOptions[],
   ): Promise<boolean> {
     if (!token) {
-      console.error('ZEGO RN LOG - token is empty, please enter a right token');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][joinRoom] - Token is empty, please enter a right token',
+      );
+      return Promise.resolve(false);
+    }
+    if (!options) {
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][joinRoom] - Options is empty, please enter a right options',
+      );
       return Promise.resolve(false);
     }
     this.roomID = roomID;
-    options && (this.mediaOptions = options);
+    this.mediaOptions = options;
 
     this.localParticipant.userID = user.userID;
     this.localParticipant.name = user.userName;
@@ -83,7 +89,7 @@ export class ZegoExpressManager {
     return ZegoExpressEngine.instance()
       .loginRoom(roomID, user, roomConfig)
       .then(async () => {
-        console.warn('ZEGO RN LOG - joinRoom success');
+        console.warn('[ZEGOCLOUD LOG][Manager][loginRoom] - Login success');
         this.localParticipant.camera = this.mediaOptions.includes(
           ZegoMediaOptions.PublishLocalVideo,
         );
@@ -94,19 +100,21 @@ export class ZegoExpressManager {
           await ZegoExpressEngine.instance().startPublishingStream(
             this.localParticipant.streamID,
           );
-          console.warn('ZEGO RN LOG - startPublishingStream success');
-          await ZegoExpressEngine.instance().enableCamera(
-            this.localParticipant.camera,
-          );
           console.warn(
-            'ZEGO RN LOG - enableCamera success',
+            '[ZEGOCLOUD LOG][Manager][startPublishingStream] - Publish success',
+          );
+          await ZegoExpressEngine.instance().enableCamera(
             this.localParticipant.camera,
           );
           await ZegoExpressEngine.instance().muteMicrophone(
             !this.localParticipant.mic,
           );
           console.warn(
-            'ZEGO RN LOG - muteMicrophone success',
+            '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
+            this.localParticipant.camera,
+          );
+          console.warn(
+            '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
             !this.localParticipant.mic,
           );
         }
@@ -118,7 +126,10 @@ export class ZegoExpressManager {
     return ZegoExpressEngine.instance()
       .enableCamera(enable)
       .then(() => {
-        console.warn('ZEGO RN LOG - enableCamera success', enable);
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
+          enable,
+        );
       });
   }
   enableMic(enable: boolean): Promise<void> {
@@ -126,35 +137,44 @@ export class ZegoExpressManager {
     return ZegoExpressEngine.instance()
       .muteMicrophone(!enable)
       .then(() => {
-        console.warn('ZEGO RN LOG - muteMicrophone success', !enable);
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
+          !enable,
+        );
       });
   }
   setLocalVideoView(renderView: number) {
     if (!this.roomID) {
       console.error(
-        'ZEGO RN LOG - You need to join the room first and then set the videoView',
+        '[ZEGOCLOUD LOG][Manager][setLocalVideoView] - You need to join the room first and then set the videoView',
       );
       return;
     }
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][setLocalVideoView] - You need to pass in the correct element',
+      );
       return;
     }
     const zegoView = new ZegoView(renderView, ZegoViewMode.AspectFit, 0);
     ZegoExpressEngine.instance()
       .startPreview(zegoView)
       .then(() => {
-        console.warn('ZEGO RN LOG - startPreview success');
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][startPreview] - Preview success',
+        );
       });
   }
   setRemoteVideoView(userID: string, renderView: number) {
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][setRemoteVideoView] - You need to pass in the correct element',
+      );
       return;
     }
     if (!userID) {
       console.error(
-        'ZEGO RN LOG - userID is empty, please enter a right userID',
+        '[ZEGOCLOUD LOG][Manager][setRemoteVideoView] - UserID is empty, please enter a right userID',
       );
     }
     const participant = this.participantDic.get(userID) as ZegoParticipant;
@@ -169,14 +189,19 @@ export class ZegoExpressManager {
     this.playStream(userID);
   }
   leaveRoom(): Promise<void> {
+    console.warn(
+      '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop publishing stream',
+    );
+    console.warn('[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop preview');
     const roomID = this.roomID;
     ZegoExpressEngine.instance().stopPublishingStream();
-    console.warn('ZEGO RN LOG - stopPublishingStream');
     ZegoExpressEngine.instance().stopPreview();
-    console.warn('ZEGO RN LOG - stopPreview');
     this.participantDic.forEach(participant => {
       ZegoExpressEngine.instance().stopPlayingStream(participant.streamID);
-      console.warn('ZEGO RN LOG - stopPlayingStream', participant.streamID);
+      console.warn(
+        '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop playing stream',
+        participant.streamID,
+      );
     });
     this.participantDic.clear();
     this.streamDic.clear();
@@ -194,7 +219,7 @@ export class ZegoExpressManager {
     return ZegoExpressEngine.instance()
       .logoutRoom(roomID)
       .then(() => {
-        console.warn('ZEGO RN LOG - logoutRoom success');
+        console.warn('[ZEGOCLOUD LOG][Manager][logoutRoom] - Logout success');
       });
   }
   onRoomUserUpdate(
@@ -207,6 +232,12 @@ export class ZegoExpressManager {
     return ZegoExpressEngine.instance().on(
       'roomUserUpdate',
       (roomID: string, updateType: ZegoUpdateType, userList: ZegoUser[]) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onRoomUserUpdate]',
+          roomID,
+          updateType,
+          userList,
+        );
         const userIDList: string[] = [];
         userList.forEach((user: ZegoUser) => {
           userIDList.push(user.userID);
@@ -229,15 +260,28 @@ export class ZegoExpressManager {
   ) {
     return ZegoExpressEngine.instance().on('roomTokenWillExpire', fun);
   }
+  onRoomStateUpdate(fun: (state: ZegoRoomState) => void) {
+    return ZegoExpressEngine.instance().on(
+      'roomStateUpdate',
+      (roomID: string, state: ZegoRoomState) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onRoomStateUpdate]',
+          roomID,
+          state,
+        );
+        fun(state);
+      },
+    );
+  }
   private generateStreamID(userID: string, roomID: string): string {
     if (!userID) {
       console.error(
-        'ZEGO RN LOG - userID is empty, please enter a right userID',
+        '[ZEGOCLOUD LOG][Manager][generateStreamID] - UserID is empty, please enter a right userID',
       );
     }
     if (!roomID) {
       console.error(
-        'ZEGO RN LOG - roomID is empty, please enter a right roomID',
+        '[ZEGOCLOUD LOG][Manager][generateStreamID] - RoomID is empty, please enter a right roomID',
       );
     }
 
@@ -251,7 +295,7 @@ export class ZegoExpressManager {
       'roomUserUpdate',
       (roomID: string, updateType: ZegoUpdateType, userList: ZegoUser[]) => {
         console.warn(
-          'ZEGO RN LOG - roomUserUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomUserUpdate]',
           roomID,
           updateType,
           userList,
@@ -282,7 +326,7 @@ export class ZegoExpressManager {
         streamList: ZegoStream[],
       ) => {
         console.warn(
-          'ZEGO RN LOG - roomStreamUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomStreamUpdate]',
           roomID,
           updateType,
           streamList,
@@ -350,6 +394,11 @@ export class ZegoExpressManager {
     ZegoExpressEngine.instance().on(
       'remoteCameraStateUpdate',
       (streamID: string, state: ZegoRemoteDeviceState) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][remoteCameraStatusUpdate]',
+          streamID,
+          state,
+        );
         const participant = this.streamDic.get(streamID);
         if (participant) {
           const updateType =
@@ -368,6 +417,11 @@ export class ZegoExpressManager {
     ZegoExpressEngine.instance().on(
       'remoteMicStateUpdate',
       (streamID: string, state: ZegoRemoteDeviceState) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][remoteMicStatusUpdate]',
+          streamID,
+          state,
+        );
         const participant = this.streamDic.get(streamID);
         if (participant) {
           const updateType =
@@ -387,7 +441,7 @@ export class ZegoExpressManager {
       'roomStateUpdate',
       (roomID, state, errorCode) => {
         console.warn(
-          'ZEGO RN LOG - roomStateUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomStateUpdate]',
           roomID,
           state,
           errorCode,
@@ -395,7 +449,6 @@ export class ZegoExpressManager {
       },
     );
   }
-
   private playStream(userID: string) {
     if (
       this.mediaOptions.includes(ZegoMediaOptions.AutoPlayAudio) ||
@@ -407,6 +460,9 @@ export class ZegoExpressManager {
           participant.renderView,
           ZegoViewMode.AspectFit,
           0,
+        );
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][playStream] - Start playing stream',
         );
         ZegoExpressEngine.instance().startPlayingStream(
           participant.streamID,
