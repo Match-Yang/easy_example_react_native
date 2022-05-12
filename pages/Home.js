@@ -6,14 +6,9 @@
  * @flow strict-local
  */
 
-import React, { Component } from 'react';
-import {
-  Button,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Actions } from 'react-native-router-flux'
+import React, {Component} from 'react';
+import {Button, StyleSheet, Text, View} from 'react-native';
+import {Actions} from 'react-native-router-flux';
 
 const styles = StyleSheet.create({
   // ZegoEasyExample
@@ -52,7 +47,7 @@ const config = {
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: '123456',
-}
+};
 
 export default class Home extends Component {
   constructor(props) {
@@ -61,27 +56,26 @@ export default class Home extends Component {
 
   async startCall() {
     var tokenObj = await this.generateToken();
-    Actions.call({ appID: config.appID, token: tokenObj['token'], roomID: config.roomID, userID: config.userID, userName: config.userName })
+    Actions.call({
+      appID: config.appID,
+      token: tokenObj.token,
+      roomID: config.roomID,
+      userID: config.userID,
+      userName: config.userName,
+    });
   }
   generateToken() {
     // Obtain the token interface provided by the App Server
-    return fetch(
-      `${config.tokerServerUrl}/access_token?uid=${config.userID}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-        },
+    return fetch(`${config.tokerServerUrl}/access_token?uid=${config.userID}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
       },
-    ).then(data => data.json());
-  };
+    }).then(data => data.json());
+  }
   render() {
     return (
-      <View
-        style={[
-          styles.homePage,
-          styles.showPage,
-        ]}>
+      <View style={[styles.homePage, styles.showPage]}>
         <Text style={styles.logo}>ZEGOCLOUD</Text>
         <View style={styles.joinRoomBtn}>
           <Button onPress={this.startCall.bind(this)} title="joinRoom" />
