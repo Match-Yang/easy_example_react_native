@@ -35,19 +35,21 @@ Clone the easy example Github repository.
 
 #### Modify the project configurations
 
-* You need to modify `appID` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
-* [Generate a Token on your app server (recommended)](https://docs.zegocloud.com/article/11648), provide an interface for the client to call and replace the generateToken method above.
+* You need to set `appID` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
+* You need to set `serverUrl` to a valid URL that can be obtained for Zego auth token and post FCM notification request.
 
-> If you are using Heroku for your backen service, you can deploy the token generation service by one click.
+> We use Heroku for test backen service, you can deploy the token generation service with one simple click.
 >
-> [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs)
+> [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs)
 >
-> Once done you will get an url for your instance, try accessing `https://<heroku url>/access_token?uid=1234` to check if it works.
+> Once deployed completed, you will get an url for your instance, try accessing `https://<heroku url>/access_token?uid=1234` to check if it works.
 > 
-> Check [dynamic_token_server_nodejs](https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs) for more details.
+> Check [easy_example_call_server_nodejs](https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs) for more details.
+> 
+> Note⚠️⚠️⚠️: There are some limitations for Heroku free account, please check this [Free Dyno Hours](https://devcenter.heroku.com/articles/free-dyno-hours) if you want to use Heroku for your production service.
 
 
-> ![config](media/init.jpg)
+> ![config](docs/images/init.jpg)
 
 #### Run on your device
 1. For Android
@@ -92,23 +94,29 @@ The following will describe how to build your own project based on this project.
 
 ### Copy the source code
 
-Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your typescript project.
+Copy the `ZegoExpressManager` folder, `img` folder, `pages` folder and `App.js` files to your project.
 
-> ![project](media/project.png)
+> ![project](docs/images/project.jpg)
 
 ### Add dependencies to `package.json`
 
 ```json
 "dependencies": {
-    "zego-express-engine-reactnative": "^0.17.3"
+    ...
+    "@notifee/react-native": "^5.2.1",
+    "@react-native-firebase/app": "^14.9.2",
+    "@react-native-firebase/messaging": "^14.9.2",
+    "notifee": "^0.0.1",
+    "react-native-router-flux": "^4.3.1",
+    "zego-express-engine-reactnative": "^0.17.3",
 }
 ```
 ### Grant permission
 
-You need to grant the network access, camera, and microphone permission to make your APP work as except.
+You need to grant the network access, camera, microphone and notification permission to make your APP work as except.
 
 #### For iOS
-> ![image](media/grant_permission_ios.gif)
+> ![image](docs/images/grant_permission_ios.gif)
 ```plist
 <key>NSCameraUsageDescription</key>
 <string>We need to use your camera to help you join the voice interaction.</string>
@@ -117,7 +125,7 @@ You need to grant the network access, camera, and microphone permission to make 
 ```
 
 #### For Android
-> ![image](media/grant_permission_android.gif)
+> ![image](docs/images/grant_permission_android.gif)
 ```xml
 <!-- Permissions required by the SDK --> 
 
@@ -137,7 +145,67 @@ You need to grant the network access, camera, and microphone permission to make 
 <uses-feature android:glEsVersion="0x00020000"  android:required="true" />
 <uses-feature android:name="android.hardware.camera" />
 <uses-feature android:name="android.hardware.camera.autofocus" />
+
+<!-- Permissions required by notification -->
+<application
+  ...
+  <activity
+    android:showWhenLocked="true"
+    android:turnScreenOn="true"
+    ...
 ```
+
+### Setup FCM and notification(Android)
+
+We use [Firebase FCM](https://firebase.google.com/docs/cloud-messaging) for notification service and use [Notifee](https://notifee.app/) to display the notification content.
+
+#### Setup FCM
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create new project if you don't have one.
+2. Andd new `Android` app to your Firebase project. Download the `google-service.json` file and  move it into your Android app module root directory.
+![](docs/images/fcm_android_json_file.jpg)
+3.  Add the google-services plugin as a dependency inside of your `/android/build.gradle` file:
+![](docs/images/google_service_dep.gif)
+```xml
+buildscript {
+  dependencies {
+    // ... other dependencies
+    classpath 'com.google.gms:google-services:4.3.10'
+    // Add me --- /\
+  }
+}
+```
+4. Execute the plugin by adding the following to your `/android/app/build.gradle` file:
+![](docs/images/google_service_dep_1.gif)
+```xml
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services' // <- Add this line
+```
+
+#### Setup Notifee
+
+1. Add libs configuration for Notifee to your `/android/build.gradle` file:
+```xml
+allprojects {
+    repositories {
+        // ADD THIS BLOCK - this is how Notifee finds its Android library:
+        maven {
+          url "$rootDir/../node_modules/@notifee/react-native/android/libs"
+        }
+```
+2. Add custom notification sound `call_invite.mp3` into `/android/app/src/main/res/raw/call_invite.mp3`.
+> Note⚠️⚠️⚠️: custom notification sound only support `.mp3` file on Android platform
+
+#### Setup backend service
+1. Generate `Firebase Admin SDK Private Key`
+
+![Generate Key](docs/images/fcm_admin_sdk_key.gif)
+2. Click this deploy button to start deploy your service:
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs)
+
+If you are using [Firebase Cloud Functions](https://firebase.google.com/docs/functions), check [this doc](https://firebase.google.com/docs/cloud-messaging/send-message#send-messages-to-specific-devices) for usage and check [this example code](https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs/blob/master/index.js) to make the FCM work with your project.
+
 
 ### Method call
 

@@ -68,14 +68,13 @@ const config = {
    // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
    appID: ,
    // Heroku server url for example
-   // Get the server from: https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs
+   // Get the server from: https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs
    serverUrl: ''
 }
 
 class App extends Component {
    routesInstance;
    messageListener;
-   backgroundMessageListener;
 
    state = {
       userID: '',
@@ -89,7 +88,6 @@ class App extends Component {
 
    componentWillUnmount() {
       this.messageListener;
-      // this.backgroundMessageListener;
    }
 
    async onAppBootstrap() {
