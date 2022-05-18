@@ -103,6 +103,16 @@ Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your
     "zego-express-engine-reactnative": "^0.17.3"
 }
 ```
+### Turn off some classes's confusion
+
+To prevent the ZEGO SDK public class names from being obfuscated, please complete the following steps:
+
+1. Open `proguard-rules.pro` file under [your_project > android > app] and add content as show below:
+```
+-keep class **.zego.**  { *; }
+```
+![image](media/proguard_rules_config.jpg)
+
 ### Grant permission
 
 You need to grant the network access, camera, and microphone permission to make your APP work as except.
