@@ -33,6 +33,7 @@ export class ZegoExpressManager {
     userID: string,
     roomID: string,
   ) => void)[] = [];
+  private isPublish = false;
   private roomExtraInfo!: ZegoRoomExtraInfo;
   static shared: ZegoExpressManager;
   private constructor() {
@@ -100,32 +101,35 @@ export class ZegoExpressManager {
           ZegoMediaOptions.PublishLocalAudio,
         );
         if (this.localParticipant.camera || this.localParticipant.mic) {
-          await ZegoExpressEngine.instance().startPublishingStream(
-            this.localParticipant.streamID,
-          );
-          console.warn(
-            '[ZEGOCLOUD LOG][Manager][startPublishingStream] - Publish success',
-          );
-          await ZegoExpressEngine.instance().enableCamera(
-            this.localParticipant.camera,
-          );
-          await ZegoExpressEngine.instance().muteMicrophone(
-            !this.localParticipant.mic,
-          );
-          console.warn(
-            '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
-            this.localParticipant.camera,
-          );
-          console.warn(
-            '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
-            !this.localParticipant.mic,
-          );
+          ZegoExpressEngine.instance()
+            .startPublishingStream(this.localParticipant.streamID)
+            .then(() => {
+              console.warn(
+                '[ZEGOCLOUD LOG][Manager][startPublishingStream] - Publish success',
+              );
+              this.isPublish = true;
+            });
+          ZegoExpressEngine.instance()
+            .enableCamera(this.localParticipant.camera)
+            .then(() => {
+              console.warn(
+                '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
+                this.localParticipant.camera,
+              );
+            });
+          ZegoExpressEngine.instance()
+            .muteMicrophone(!this.localParticipant.mic)
+            .then(() => {
+              console.warn(
+                '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
+                !this.localParticipant.mic,
+              );
+            });
         }
         return true;
       });
   }
   enableCamera(enable: boolean): Promise<void> {
-    this.localParticipant.camera = enable;
     return ZegoExpressEngine.instance()
       .enableCamera(enable)
       .then(() => {
@@ -133,10 +137,11 @@ export class ZegoExpressManager {
           '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
           enable,
         );
+        this.localParticipant.camera = enable;
+        this.triggerStreamHandle('camera', enable);
       });
   }
   enableMic(enable: boolean): Promise<void> {
-    this.localParticipant.mic = enable;
     return ZegoExpressEngine.instance()
       .muteMicrophone(!enable)
       .then(() => {
@@ -144,6 +149,8 @@ export class ZegoExpressManager {
           '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
           !enable,
         );
+        this.localParticipant.mic = enable;
+        this.triggerStreamHandle('mic', enable);
       });
   }
   setLocalVideoView(renderView: number) {
@@ -159,14 +166,11 @@ export class ZegoExpressManager {
       );
       return;
     }
-    const zegoView = new ZegoView(renderView, ZegoViewMode.AspectFit, 0);
-    ZegoExpressEngine.instance()
-      .startPreview(zegoView)
-      .then(() => {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][startPreview] - Preview success',
-        );
-      });
+    const {streamID, userID} = this.localParticipant;
+    this.localParticipant.renderView = renderView;
+    this.participantDic.set(userID, this.localParticipant);
+    this.streamDic.set(streamID, this.localParticipant);
+    this.triggerPreview('start');
   }
   setRemoteVideoView(userID: string, renderView: number) {
     if (renderView === null) {
@@ -233,13 +237,8 @@ export class ZegoExpressManager {
     // @ts-ignore
     this.localParticipant = {};
     this.deviceUpdateCallback.length = 0;
-    this.mediaOptions = [
-      ZegoMediaOptions.AutoPlayAudio,
-      ZegoMediaOptions.AutoPlayVideo,
-      ZegoMediaOptions.PublishLocalAudio,
-      ZegoMediaOptions.PublishLocalVideo,
-    ];
-
+    this.mediaOptions = [];
+    this.isPublish = false;
     return ZegoExpressEngine.instance()
       .logoutRoom(roomID)
       .then(() => {
@@ -514,6 +513,74 @@ export class ZegoExpressManager {
           participant.streamID,
           !this.mediaOptions.includes(ZegoMediaOptions.AutoPlayVideo),
         );
+      }
+    }
+  }
+  private triggerStreamHandle(type: 'camera' | 'mic', enable: boolean) {
+    const {streamID, camera, mic} = this.localParticipant;
+    if (enable) {
+      if (!this.isPublish) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][triggerStreamHandle] - Start publishing stream',
+        );
+        ZegoExpressEngine.instance()
+          .startPublishingStream(streamID)
+          .then(() => {
+            this.isPublish = true;
+            this.triggerPreview('start');
+          });
+      }
+    } else {
+      if (
+        ((type === 'camera' && !mic) || (type === 'mic' && !camera)) &&
+        !this.mediaOptions.includes(ZegoMediaOptions.PublishLocalAudio) &&
+        !this.mediaOptions.includes(ZegoMediaOptions.PublishLocalVideo)
+      ) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][triggerStreamHandle] - Stop publishing stream',
+        );
+        ZegoExpressEngine.instance()
+          .stopPublishingStream()
+          .then(() => {
+            this.isPublish = false;
+            this.triggerPreview('stop');
+          });
+      }
+    }
+  }
+  private triggerPreview(type: 'start' | 'stop') {
+    if (this.localParticipant.renderView) {
+      if (type === 'stop') {
+        // Stop preview
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][triggerPreview] - Stop preview',
+          this.localParticipant.streamID,
+        );
+        ZegoExpressEngine.instance()
+          .stopPreview()
+          .then(() => {
+            console.warn(
+              '[ZEGOCLOUD LOG][Manager][triggerPreview] - Stop preview success',
+            );
+          });
+      } else {
+        // Start preview
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][triggerPreview] - Start preview',
+          this.localParticipant.streamID,
+        );
+        const zegoView = new ZegoView(
+          this.localParticipant.renderView,
+          ZegoViewMode.AspectFit,
+          0,
+        );
+        ZegoExpressEngine.instance()
+          .startPreview(zegoView)
+          .then(() => {
+            console.warn(
+              '[ZEGOCLOUD LOG][Manager][triggerPreview] - Preview success',
+            );
+          });
       }
     }
   }
