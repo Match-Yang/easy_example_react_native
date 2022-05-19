@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
 
 export default class CallPage extends Component {
   localViewRef;
-  localResourceViewRef;
+  resourceViewRef;
   remoteViewRef;
   appID;
   token;
@@ -140,7 +140,7 @@ export default class CallPage extends Component {
   constructor(props) {
     super(props);
     this.localViewRef = React.createRef();
-    this.localResourceViewRef = React.createRef();
+    this.resourceViewRef = React.createRef();
     this.remoteViewRef = React.createRef();
     this.appID = parseInt(props.appID, 10);
     this.token = props.token;
@@ -169,7 +169,7 @@ export default class CallPage extends Component {
   }
   async componentWillUnmount() {
     await ZegoExpressManager.instance().leaveRoom();
-    await ZegoExpressEngine.destroyEngine();
+    await ZegoExpressManager.destroyEngine();
     console.warn(
       '[ZEGOCLOUD LOG][CallPage][componentWillUnmount] - Destroy engine success',
     );
@@ -189,7 +189,7 @@ export default class CallPage extends Component {
             ZegoExpressManager.instance().setRemoteVideoView(
               userID,
               findNodeHandle(this.remoteViewRef.current),
-              findNodeHandle(this.localResourceViewRef.current),
+              findNodeHandle(this.resourceViewRef.current),
             );
           });
         }
@@ -328,7 +328,7 @@ export default class CallPage extends Component {
           // The sharing video side calls this interface
           ZegoExpressManager.instance()
             .setLocalVideoResourceView(
-              findNodeHandle(this.localResourceViewRef.current),
+              findNodeHandle(this.resourceViewRef.current),
             )
             .then(() => {
               console.warn(
@@ -401,7 +401,7 @@ export default class CallPage extends Component {
       <View style={[styles.callPage]}>
         <View style={[styles.resourcePreview]}>
           <ZegoTextureView
-            ref={this.localResourceViewRef}
+            ref={this.resourceViewRef}
             // @ts-ignore
             style={styles.resourcePreviewView}
           />

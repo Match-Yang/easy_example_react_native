@@ -65,6 +65,13 @@ export class ZegoExpressManager {
       },
     );
   }
+  static destroyEngine(): Promise<void> {
+    return ZegoExpressEngine.destroyEngine().then(() => {
+      console.warn(
+        '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
+      );
+    });
+  }
   joinRoom(
     roomID: string,
     token: string,

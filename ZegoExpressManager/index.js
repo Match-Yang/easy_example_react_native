@@ -186,6 +186,15 @@ var ZegoExpressManager = /** @class */ (function () {
         return engine;
       });
   };
+  ZegoExpressManager.destroyEngine = function () {
+    return zego_express_engine_reactnative_1.default
+      .destroyEngine()
+      .then(function () {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
+        );
+      });
+  };
   ZegoExpressManager.prototype.joinRoom = function (
     roomID,
     token,
