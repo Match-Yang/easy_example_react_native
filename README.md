@@ -50,6 +50,7 @@ Clone the easy example Github repository.
 > ![config](media/init.jpg)
 
 #### Run on your device
+
 1. For Android
 
 ```ssh
@@ -82,6 +83,7 @@ $ yarn android
 > Then select a development team in the Signing & Capabilities editor.
 
 When all the configuration is ready, run:
+
 ```bash
 $ yarn ios
 ```
@@ -92,7 +94,7 @@ The following will describe how to build your own project based on this project.
 
 ### Copy the source code
 
-Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your typescript project.
+Copy the `ZegoExpressManager` folder、`pages` folder、`img` folder and `App.js` files to your typescript project.
 
 > ![project](media/project.png)
 
@@ -103,14 +105,17 @@ Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your
     "zego-express-engine-reactnative": "^0.17.3"
 }
 ```
+
 ### Turn off some classes's confusion
 
 To prevent the ZEGO SDK public class names from being obfuscated, please complete the following steps:
 
 1. Open `proguard-rules.pro` file under [your_project > android > app] and add content as show below:
+
 ```
 -keep class **.zego.**  { *; }
 ```
+
 ![image](media/proguard_rules_config.jpg)
 
 ### Grant permission
@@ -118,7 +123,9 @@ To prevent the ZEGO SDK public class names from being obfuscated, please complet
 You need to grant the network access, camera, and microphone permission to make your APP work as except.
 
 #### For iOS
+
 > ![image](media/grant_permission_ios.gif)
+
 ```plist
 <key>NSCameraUsageDescription</key>
 <string>We need to use your camera to help you join the voice interaction.</string>
@@ -127,7 +134,9 @@ You need to grant the network access, camera, and microphone permission to make 
 ```
 
 #### For Android
+
 > ![image](media/grant_permission_android.gif)
+
 ```xml
 <!-- Permissions required by the SDK --> 
 
@@ -152,7 +161,12 @@ You need to grant the network access, camera, and microphone permission to make 
 ### Method call
 
 The calling sequence of the SDK interface is as follows:
-createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpire --> joinRoom --> setLocalVideoView/setRemoteVideoView --> leaveRoom
+createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpire --> joinRoom --> setLocalVideoView/setRemoteVideoView --> leaveRoom --> destroyEngine
+
+After joining the room successfully, If you are a client of sharing video, the calling sequence of the video playback related interface is as follows:
+setLocalVideoResourceView --> onMediaPlayerPlayingProgress、onMediaPlayerStateUpdate、onMediaPlayerNetworkEvent --> loadResource --> start - --> stop
+
+If you are the client receiving the video, then you don't need to call the video playback related interface.
 
 #### Create engine
 
@@ -184,20 +198,12 @@ ZegoExpressManager.instance().onRoomTokenWillExpire((roomID, remainTimeInSecond)
 
 #### Join room
 
-When you want to communicate with audio and video, you need to call the join room interface first. According to your business scenario, you can set different audio and video controls through options, such as:
+When you want to communicate with audio and video, you need to call the join room interface first.
 
 ZegoMediaOptions enumeration can be found in ZegoExpressManager/index.entity.ts.
 
-1. call scene: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo], the default is this scenario
-2. Live scene - host: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo]
-3. Live scene - audience:[ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio]
-4. Chat room - host: [ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio]
-5. Chat room - audience: [ZegoMediaOptions.AutoPlayAudio]
-
-The following sample code is an example of a call scenario, options can not be passed by default:
-
 ```typescript
-ZegoExpressManager.instance().joinRoom(config.roomID, token, { userID: config.userID, userName: config.userName });
+ZegoExpressManager.instance().joinRoom(config.roomID, token, { userID: config.userID, userName: config.userName }, [ ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.AutoPlayVideo ]);
 ```
 
 #### Set video view
@@ -207,18 +213,80 @@ If your project needs to use the video communication function, you need to set t
 **setLocalVideoView:**
 
 ```tsx
-<ZegoTextureView ref={this.zegoPreviewViewRef}/>
+<ZegoTextureView ref={this.localViewRef}/>
+<ZegoTextureView ref={this.resourceViewRef}/>
 ```
 
 ```typescript
-this.zegoPreviewViewRef = React.createRef();
-ZegoExpressManager.instance().setLocalVideoView(findNodeHandle(this.zegoPreviewViewRef.current));
+this.localViewRef = React.createRef();
+ZegoExpressManager.instance().setLocalVideoView(findNodeHandle(this.localViewRef.current));
+```
+
+If you are a client of sharing video, you also need to call the following related interfaces.
+
+```typescript
+// Set the view for the video rendering
+ZegoExpressManager.instance().setLocalVideoResourceView(findNodeHandle(this.resourceViewRef.current)
+
+// Register the video playback progress callback
+ZegoExpressManager.instance().onMediaPlayerPlayingProgress(millisecond => {
+    // Do something...
+});
+
+// Register the video playback status callback
+ZegoExpressManager.instance().onMediaPlayerStateUpdate((state, errorCode) => {
+    // Do something...
+    switch (state) {
+        case 0:
+            // Play stop state
+            break;
+        case 1:
+            // Playing state
+            break;
+        case 2:
+            // Pause state
+            break;
+        case 3:
+            // After the current track is played, you can perform operations such as playing the next track
+            break;
+    }
+});
+
+// Register video playback network state callback
+ZegoExpressManager.instance().onMediaPlayerNetworkEvent(networkEvent => {
+   // Do something...
+});
+
+// Loading Video Resources, the absolute path of the local resource or the URL of the network resource
+ZegoExpressManager.instance().loadResource(path);
+
+// Start playing video, corresponding to stop, called after loadResource
+ZegoExpressManager.instance().start();
+
+// Pause video, corresponds to resume which is called when you need to pause a play
+ZegoExpressManager.instance().pause();
+
+// Resume playing video, corresponding to pause which is called when playback needs to be resumed
+ZegoExpressManager.instance().resume();
+
+// Adjust playback Progress, the unit is s
+ZegoExpressManager.instance().seekTo(progress);
+
+// Get current progress
+ZegoExpressManager.instance().getCurrentProgress();
+
+// Obtain the total video playing duration, the unit is s
+ZegoExpressManager.instance().getTotalDuration();
+
+// Stop playing the video, corresponding to start which is called when playback needs to be stopped
+ZegoExpressManager.instance().stop();
 ```
 
 **setRemoteVideoView:**
 
 ```tsx
-<ZegoTextureView ref={this.zegoPlayViewRef}/>
+<ZegoTextureView ref={this.remoteViewRef}/>
+<ZegoTextureView ref={this.resourceViewRef}/>
 ```
 
 ```typescript
@@ -228,7 +296,8 @@ ZegoExpressManager.instance().onRoomUserUpdate(
             if (updateType === ZegoUpdateType.Add) {
                 ZegoExpressManager.instance().setRemoteVideoView(
                 userID,
-                findNodeHandle(this.zegoPlayViewRef.current));
+                findNodeHandle(this.remoteViewRef.current));
+                findNodeHandle(this.resourceViewRef.current);
             }
         });
     }
@@ -241,4 +310,12 @@ When you want to leave the room, you can call the leaveroom interface.
 
 ```typescript
 ZegoExpressManager.instance().leaveRoom();
+```
+
+#### Destroy engine
+
+When you don't need to use the SDK anymore, you can uninitialize engine to release the resources.
+
+```typescript
+ZegoExpressManager.destroyEngine();
 ```
