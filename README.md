@@ -92,7 +92,7 @@ The following will describe how to build your own project based on this project.
 
 ### Copy the source code
 
-Copy the `ZegoExpressManager` folder、 `img` folder and `App.tsx` files to your typescript project.
+Copy the `ZegoExpressManager` folder、 `pages` folder、`img` folder and `App.js` files to your typescript project.
 
 > ![project](media/project.png)
 
