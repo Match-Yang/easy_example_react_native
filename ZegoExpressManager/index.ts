@@ -10,6 +10,8 @@ import ZegoExpressEngine, {
   ZegoPlayStreamQuality,
   ZegoStream,
   ZegoRoomState,
+  ZegoRoomExtraInfo,
+  ZegoRoomSetRoomExtraInfoResult,
 } from 'zego-express-engine-reactnative';
 
 import {
@@ -31,6 +33,7 @@ export class ZegoExpressManager {
     userID: string,
     roomID: string,
   ) => void)[] = [];
+  private roomExtraInfo!: ZegoRoomExtraInfo;
   static shared: ZegoExpressManager;
   private constructor() {
     if (!ZegoExpressManager.shared) {
@@ -188,6 +191,27 @@ export class ZegoExpressManager {
     }
     this.playStream(userID);
   }
+  setRoomExtraInfo(key: string, value: string): Promise<boolean> {
+    // Currently, only one key-value pair is allowed for room additional messages.
+    // The maximum length of key is 10 bytes, and the maximum length of value is 100 bytes.
+    return ZegoExpressEngine.instance()
+      .setRoomExtraInfo(this.roomID, key, value)
+      .then((result: ZegoRoomSetRoomExtraInfoResult) => {
+        if (result.errorCode === 0) {
+          console.warn(
+            '[ZEGOCLOUD LOG][Manager][setRoomExtraInfo] - Set success',
+          );
+          // const { userID, name: userName } = this.localParticipant;
+          // this.roomExtraInfo = {
+          //   key,
+          //   value,
+          //   updateUser: { userID, userName },
+          //   updateTime: new Date().getTime(),
+          // };
+        }
+        return result.errorCode === 0;
+      });
+  }
   leaveRoom(): Promise<void> {
     console.warn(
       '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop publishing stream',
@@ -259,6 +283,20 @@ export class ZegoExpressManager {
     fun: (roomID: string, remainTimeInSecond: number) => void,
   ) {
     return ZegoExpressEngine.instance().on('roomTokenWillExpire', fun);
+  }
+  onRoomExtraInfoUpdate(fun: (roomExtraInfoList: ZegoRoomExtraInfo[]) => void) {
+    return ZegoExpressEngine.instance().on(
+      'roomExtraInfoUpdate',
+      (roomID: string, roomExtraInfoList: ZegoRoomExtraInfo[]) => {
+        // this.roomExtraInfo = roomExtraInfoList[0];
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onRoomExtraInfoUpdate]',
+          roomID,
+          roomExtraInfoList,
+        );
+        fun(roomExtraInfoList);
+      },
+    );
   }
   onRoomStateUpdate(fun: (state: ZegoRoomState) => void) {
     return ZegoExpressEngine.instance().on(
