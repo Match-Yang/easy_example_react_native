@@ -100,7 +100,7 @@ Copy the `ZegoExpressManager` folder、 `pages` folder、`img` folder and `App.j
 
 ```json
 "dependencies": {
-    "zego-express-engine-reactnative": "^0.17.3"
+    "zego-express-engine-reactnative": "^0.18.0"
 }
 ```
 ### Turn off some classes's confusion
@@ -152,7 +152,7 @@ You need to grant the network access, camera, and microphone permission to make 
 ### Method call
 
 The calling sequence of the SDK interface is as follows:
-createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpire --> joinRoom --> setLocalVideoView/setRemoteVideoView --> leaveRoom
+createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpire、onRoomExtraInfoUpdate、onRoomStateUpdate --> joinRoom --> setLocalVideoView/setRemoteVideoView --> enableCamera、enableMic --> leaveRoom
 
 #### Create engine
 
@@ -163,7 +163,7 @@ const profile = {
     appID: config.appID,
     scenario: ZegoScenario.General,
 } as ZegoEngineProfile;
-ZegoExpressManager.instance().createEngine(profile);
+ZegoExpressManager.createEngine(profile);
 ```
 
 #### Register related callbacks
@@ -180,6 +180,12 @@ ZegoExpressManager.instance().onRoomUserDeviceUpdate((updateType, userID, roomID
 ZegoExpressManager.instance().onRoomTokenWillExpire((roomID, remainTimeInSecond) => {
     // Do something...
 });
+ZegoExpressManager.instance().onRoomExtraInfoUpdate((roomExtraInfoList) => {
+    // Do something...
+})
+ZegoExpressManager.instance().onRoomStateUpdate((state) => {
+    // Do something...
+})
 ```
 
 #### Join room
@@ -188,16 +194,25 @@ When you want to communicate with audio and video, you need to call the join roo
 
 ZegoMediaOptions enumeration can be found in ZegoExpressManager/index.entity.ts.
 
-1. call scene: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo], the default is this scenario
-2. Live scene - host: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo]
-3. Live scene - audience:[ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio]
-4. Chat room - host: [ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio]
-5. Chat room - audience: [ZegoMediaOptions.AutoPlayAudio]
+1. Join Live As Host: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo]
+2. Join Live As Audience: [ZegoMediaOptions.AutoPlayVideo, ZegoMediaOptions.AutoPlayAudio]
 
-The following sample code is an example of a call scenario, options can not be passed by default:
+The following sample code is an example of a call scenario:
 
 ```typescript
-ZegoExpressManager.instance().joinRoom(config.roomID, token, { userID: config.userID, userName: config.userName });
+// Host
+ZegoExpressManager.instance().joinRoom(config.roomID, token, {userID: config.userID, userName: config.userName}, [
+    ZegoMediaOptions.PublishLocalAudio,
+    ZegoMediaOptions.PublishLocalVideo,
+    ZegoMediaOptions.AutoPlayAudio,
+    ZegoMediaOptions.AutoPlayVideo
+]);
+
+// Audience
+ZegoExpressManager.instance().joinRoom(config.roomID, token, {userID: config.userID, userName: config.userName}, [
+    ZegoMediaOptions.AutoPlayAudio,
+    ZegoMediaOptions.AutoPlayVideo
+]);
 ```
 
 #### Set video view
@@ -207,18 +222,18 @@ If your project needs to use the video communication function, you need to set t
 **setLocalVideoView:**
 
 ```tsx
-<ZegoTextureView ref={this.zegoPreviewViewRef}/>
+<ZegoTextureView ref={this.viewRef1}/>
 ```
 
 ```typescript
-this.zegoPreviewViewRef = React.createRef();
-ZegoExpressManager.instance().setLocalVideoView(findNodeHandle(this.zegoPreviewViewRef.current));
+this.viewRef1 = React.createRef();
+ZegoExpressManager.instance().setLocalVideoView(findNodeHandle(this.viewRef1.current));
 ```
 
 **setRemoteVideoView:**
 
 ```tsx
-<ZegoTextureView ref={this.zegoPlayViewRef}/>
+<ZegoTextureView ref={this.viewRef2}/>
 ```
 
 ```typescript
@@ -228,11 +243,23 @@ ZegoExpressManager.instance().onRoomUserUpdate(
             if (updateType === ZegoUpdateType.Add) {
                 ZegoExpressManager.instance().setRemoteVideoView(
                 userID,
-                findNodeHandle(this.zegoPlayViewRef.current));
+                findNodeHandle(this.viewRef2.current));
             }
         });
     }
 );
+```
+
+#### Enable camera
+
+```typescript
+ZegoExpressManager.instance().enableCamera(enable);
+```
+
+#### Enable mic
+
+```typescript
+ZegoExpressManager.instance().enableMic(enable);
 ```
 
 #### Leave room
@@ -242,3 +269,19 @@ When you want to leave the room, you can call the leaveroom interface.
 ```typescript
 ZegoExpressManager.instance().leaveRoom();
 ```
+
+#### Destroy engine
+
+When you don't need to use the SDK anymore, you can uninitialize engine to release the resources.
+
+```typescript
+ZegoExpressManager.destroyEngine();
+```
+
+## Change Log
+
+### 2022-05-23
+
+#### New Features
+
+1. Added live streaming scene with seat
