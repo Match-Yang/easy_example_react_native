@@ -7,7 +7,7 @@
  */
 
 import React, {Component} from 'react';
-import {Button, StyleSheet, Text, View} from 'react-native';
+import {Button, StyleSheet, Text, View, TextInput} from 'react-native';
 import {Actions} from 'react-native-router-flux';
 
 const styles = StyleSheet.create({
@@ -15,25 +15,35 @@ const styles = StyleSheet.create({
   homePage: {
     width: '100%',
     height: '100%',
-  },
-  showPage: {
     display: 'flex',
-  },
-  hidePage: {
-    display: 'none',
   },
   logo: {
     textAlign: 'center',
     fontSize: 24,
     fontWeight: '600',
-    marginTop: '50%',
-    marginBottom: 100,
+    marginTop: '20%',
+    marginBottom: '15%',
+  },
+  roomInputCon: {
+    width: 200,
+    height: 40,
+    borderWidth: 2,
+    borderColor: '#005a90',
+    marginTop: '20%',
+    marginBottom: '15%',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  },
+  roomInput: {
+    width: '100%',
+    height: '100%',
   },
   joinRoomBtn: {
-    width: '30%',
+    width: 200,
     textAlign: 'center',
     marginLeft: 'auto',
     marginRight: 'auto',
+    marginBottom: '15%',
   },
 });
 
@@ -46,22 +56,34 @@ const config = {
   tokerServerUrl: '', //  https://xxx.herokuapp.com
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
-  roomID: '123456',
+  roomID: '',
 };
 
 export default class Home extends Component {
   constructor(props) {
     super(props);
   }
-
-  async startCall() {
-    var tokenObj = await this.generateToken();
+  state = {
+    inputValue: '',
+  };
+  onChangeText(value) {
+    this.setState({
+      inputValue: value,
+    });
+  }
+  async startCall(isHost) {
+    config.roomID = this.state.inputValue;
+    if (!config.roomID) {
+      return;
+    }
+    const tokenObj = await this.generateToken();
     Actions.call({
       appID: config.appID,
       token: tokenObj.token,
       roomID: config.roomID,
       userID: config.userID,
       userName: config.userName,
+      isHost: isHost,
     });
   }
   generateToken() {
@@ -75,10 +97,26 @@ export default class Home extends Component {
   }
   render() {
     return (
-      <View style={[styles.homePage, styles.showPage]}>
+      <View style={[styles.homePage]}>
         <Text style={styles.logo}>ZEGOCLOUD</Text>
+        <View style={styles.roomInputCon}>
+          <TextInput
+            placeholder="Please enter roomID here"
+            style={styles.roomInput}
+            onChangeText={text => this.onChangeText(text)}
+          />
+        </View>
         <View style={styles.joinRoomBtn}>
-          <Button onPress={this.startCall.bind(this)} title="joinRoom" />
+          <Button
+            onPress={this.startCall.bind(this, true)}
+            title="join Live As Host"
+          />
+        </View>
+        <View style={styles.joinRoomBtn}>
+          <Button
+            onPress={this.startCall.bind(this, false)}
+            title="join Live As Audience"
+          />
         </View>
       </View>
     );

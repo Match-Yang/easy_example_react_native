@@ -179,6 +179,15 @@ var ZegoExpressManager = /** @class */ (function () {
         return engine;
       });
   };
+  ZegoExpressManager.destroyEngine = function () {
+    return zego_express_engine_reactnative_1.default
+      .destroyEngine()
+      .then(function () {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
+        );
+      });
+  };
   ZegoExpressManager.prototype.joinRoom = function (
     roomID,
     token,
@@ -289,6 +298,7 @@ var ZegoExpressManager = /** @class */ (function () {
         _this.triggerStreamHandle('mic', enable);
       });
   };
+  // Can be called repeatedly without affecting the push-pull stream
   ZegoExpressManager.prototype.setLocalVideoView = function (renderView) {
     if (!this.roomID) {
       console.error(

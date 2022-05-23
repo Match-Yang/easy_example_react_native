@@ -58,6 +58,13 @@ export class ZegoExpressManager {
       },
     );
   }
+  static destroyEngine(): Promise<void> {
+    return ZegoExpressEngine.destroyEngine().then(() => {
+      console.warn(
+        '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
+      );
+    });
+  }
   joinRoom(
     roomID: string,
     token: string,
@@ -153,6 +160,7 @@ export class ZegoExpressManager {
         this.triggerStreamHandle('mic', enable);
       });
   }
+  // Can be called repeatedly without affecting the push-pull stream
   setLocalVideoView(renderView: number) {
     if (!this.roomID) {
       console.error(
