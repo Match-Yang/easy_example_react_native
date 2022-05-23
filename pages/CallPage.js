@@ -160,6 +160,8 @@ export default class CallPage extends Component {
     }
 
     registerCallback() {
+        // When other user join in the same room, this method will get call
+        // Read more doc: https://doc-en-api.zego.im/ReactNative/interfaces/_zegoexpresseventhandler_.zegoeventlistener.html#roomuserupdate
         ZegoExpressManager.instance().onRoomUserUpdate(
             (updateType, userList, roomID) => {
                 console.warn('out roomUserUpdate', updateType, userList, roomID);
@@ -239,6 +241,8 @@ export default class CallPage extends Component {
                 this.micEnable = !this.micEnable;
             });
     };
+    // Join in ZEGOCLOUD's room and wait for other.
+    // While user on the same room, they can talk to each other
     async joinRoom() {
         ZegoExpressManager.instance().joinRoom(this.roomID, this.token, { userID: this.userID, userName: this.userName },
             [ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.AutoPlayVideo]).then(result => {

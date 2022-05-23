@@ -13,6 +13,7 @@ class Routes extends Component {
    constructor(props) {
       super(props);
    }
+   // getDerivedStateFromProps is invoked right before calling the render method
    static getDerivedStateFromProps(props, state) {
       if (props.appData !== state.appData) {
          return {

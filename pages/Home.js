@@ -73,18 +73,23 @@ export default class Home extends Component {
     this.currentUserName = this.currentUserID.toUpperCase(); // TODO user name for test only
     this.serverUrl = this.appData.serverUrl;
   }
+  // Call by Routes's instance which would be trigger in the APP component by user click the notification
   handleIncomingCall(roomID)
   {
-    this.joinRoom(roomID);
+    this.jumpToCallPage(roomID);
     console.log("Handle incoming call with room id: ",roomID)
   }
+  // Post a request to backend service will the targetUserID
+  // Because every device(FCM token) has been binding with a specific user id at APP launched, 
+  // so the server can find out who you are trying to call
   async sendCallInvite(roomID) {
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         targetUserID: this.state.targetUserID,
-        callerUserID: this.currentUserName,
+        callerUserID: this.currentUserID,
+        callerUserName: this.currentUserName,
         callerIconUrl: this.currentUserIcon,
         roomID: roomID,
         callType: 'Video' // TODO For test only
@@ -93,16 +98,17 @@ export default class Home extends Component {
     const reps = await fetch(`${this.serverUrl}/call_invite`, requestOptions);
     console.log('Send call invite reps: ', reps);
   }
-  joinRoom(roomID) {
+  jumpToCallPage(roomID) {
     Actions.call({ appData: this.appData, roomID: roomID, userName: this.currentUserName })
   }
+  // Start call by click the call button
   startCall() {
     if (this.state.targetUserID == '') {
       console.warn('Invalid user id');
       return;
     }
-    // the caller use he/her own user id to join room
-    this.joinRoom(this.currentUserID);
+    // TODO the caller use he/her own user id to join room, for test only
+    this.jumpToCallPage(this.currentUserID);
     this.sendCallInvite(this.currentUserID);
   }
 

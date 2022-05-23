@@ -1,12 +1,31 @@
 import React, { Component } from 'react';
 import Routes from './pages/Routes.js';
 import messaging from '@react-native-firebase/messaging';
-import { Alert} from 'react-native'
+import { Platform, Alert } from 'react-native'
 import notifee, { AuthorizationStatus, EventType, AndroidImportance, AndroidVisibility } from '@notifee/react-native';
 
-var killedIncomingCallRoomId = '';
+//\/\/\/\/\/\/\/\/\/\/\/\/\/ 👉👉👉👉 READ THIS IF YOU WANT TO DO MORE 👈👈👈 \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+// For how to use Firebase in ReactNative: https://rnfirebase.io/
+// For how to display notification in ReactNative: https://notifee.app/react-native/docs/overview
+// For how to use ZEGOCLOUD's API: https://docs.zegocloud.com/article/6674
+///\/\/\/\/\/\/\/\/\/\/\/\/\ 👉👉👉👉 READ THIS IF YOU WANT TO DO MORE 👈👈👈 /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-// For android
+
+//\/\/\/\/\/\/\/\/\/\/\/\/\/ 🔔🔔🔔 FILL THE INFORMATION BELOW BEFORE YOU DO ANYTHING 🔔🔔🔔 \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+// 🔔🔔🔔 Any code mark with TODO is for test only, you should change it with your requirement.
+const config = {
+   // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
+   appID: ,
+   // Heroku server url for example
+   // Get the server from: https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs
+   // e.g. https://xxx.herokuapp.com
+   serverUrl: 
+}
+///\/\/\/\/\/\/\/\/\/\/\/\/\ 🔔🔔🔔 READ THIS IF YOU WANT TO DO MORE 🔔🔔🔔 /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+
+// For android only.
+// More doc: https://notifee.app/react-native/docs/android/channels
 notifee.createChannel({
    id: 'callinvite',
    name: 'Call Invite',
@@ -15,11 +34,19 @@ notifee.createChannel({
    vibrationPattern: [300, 500],
    importance: AndroidImportance.HIGH,
    visibility: AndroidVisibility.PUBLIC,
+   // Check below link for get more sound \/\/\/\/\/\/\/
    // https://clideo.com/merge-audio
    // https://www.zedge.net/find/ringtones/sound-effects
    sound: 'call_invite',
 });
 
+//\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ Code for APP been killed \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
+// Store the RoomID in global section while the APP has been killed. 
+// Then you can read it on App component call 'componentDidMount', if this variable with an empty value means it launches by the user, otherwise, launch by FCM notification.
+var killedIncomingCallRoomId = '';
+
+// Display a message while APP has been killed, trigger by FCM
 async function onBackgroundMessageReceived(message) {
    // invokeApp();
    console.log(">>>>>>>>>>Message: ", message, message.data.callerUserName);
@@ -62,15 +89,10 @@ async function onBackgroundMessageReceived(message) {
    });
    console.log('Show completed.')
 }
+// Handle message while APP has been killed
 messaging().setBackgroundMessageHandler(onBackgroundMessageReceived);
 
-const config = {
-   // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
-   appID: ,
-   // Heroku server url for example
-   // Get the server from: https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs
-   serverUrl: ''
-}
+///\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ Code for APP been killed /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 class App extends Component {
    routesInstance;
@@ -96,14 +118,17 @@ class App extends Component {
       await this.prepareBasicData();
 
       await this.setupNotification();
-      
-      if(killedIncomingCallRoomId != '') {
+
+      // If this variable comes with a non-empty value, means the APP launched by FCM notification. Then jump to incoming call logic
+      if (killedIncomingCallRoomId != '') {
          this.routesInstance.handleIncomingCall(killedIncomingCallRoomId);
       }
    }
 
    //////////////////////////// notification /////////////////////////
    async setupNotification() {
+      // When APP is open or in the foreground, any notification interaction with the user will trigger this event
+      // Read more doc: https://notifee.app/react-native/docs/events#foreground-events
       notifee.onForegroundEvent(async ({ type, detail }) => {
          if (type === EventType.PRESS) {
             console.log('User press on froeground event: ', detail)
@@ -111,6 +136,7 @@ class App extends Component {
          } else if (type == EventType.ACTION_PRESS && detail.pressAction.id) {
             if (detail.pressAction.id == 'accept') {
                console.log('Accept the call...', detail.notification.data.roomID)
+               // Jump to the home page by routesInstance
                if (this.routesInstance != undefined) {
                   this.routesInstance.handleIncomingCall(detail.notification.data.roomID);
                }
@@ -118,6 +144,8 @@ class App extends Component {
             await notifee.cancelAllNotifications();
          }
       });
+      // When APP has been killed or in the background,  any notification interaction with the user will trigger this event
+      // Read more doc: https://notifee.app/react-native/docs/events#background-events
       notifee.onBackgroundEvent(async ({ type, detail }) => {
          if (type === EventType.PRESS) {
             console.log('User press on background event: ', detail)
@@ -126,6 +154,7 @@ class App extends Component {
          } else if (type == EventType.ACTION_PRESS && detail.pressAction.id) {
             if (detail.pressAction.id == 'accept') {
                console.log('Accept the call...', detail.notification.data.roomID)
+               // Jump to the home page by routesInstance
                if (this.routesInstance != undefined) {
                   this.routesInstance.handleIncomingCall(detail.notification.data.roomID);
                }
@@ -134,8 +163,10 @@ class App extends Component {
          }
       });
 
+      // Binding FCM message callback for APP in foreground
       this.messageListener = messaging().onMessage(this.onMessageReceived);
    }
+   // Receive message from FCM and display the notification
    async onMessageReceived(message) {
       // invokeApp();
       console.log(">>>>>>>>>>Foreground Message: ", message, message.data.callerUserName);
@@ -188,7 +219,7 @@ class App extends Component {
       this.setState({
          userID: Math.floor(Math.random() * 1000000).toString()
       })
-      // Save the fcm token with user id to server
+      // Save the fcm token with user id to server, then you can invite someone to call by user's id
       const requestOptions = {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
@@ -198,6 +229,8 @@ class App extends Component {
       console.log('Store fcm token reps: ', reps);
       await this.updateZegoToken();
    }
+   // Request Zego Token for access ZEGO's API
+   // Read more doc: https://docs.zegocloud.com/article/11649
    async updateZegoToken() {
       // Obtain the token interface provided by the App Server
       const reps = await fetch(
@@ -219,6 +252,9 @@ class App extends Component {
          console.warn('Get zego token error: ', reps.text);
       }
    };
+   // Request FCM token and binding with user id for make the call invitation
+   // Every device has the unique FCM token
+   // Read more doc: https://rnfirebase.io/messaging/usage
    async updateFcmToken() {
       // Register the device with FCM
       await messaging().registerDeviceForRemoteMessages();
@@ -235,13 +271,17 @@ class App extends Component {
 
    //////////////////////////// permission stuffs /////////////////////////
    async checkPermission() {
-      // For ios
-      await this.requestiOSUserPermission();
       // For android
-      await this.checkAndroidNotificationPermission();
-      await this.checkAndroidChannelPermission('callinvite');
-      await this.checkBatteryOptimization();
-      await this.checkPowerManagerRestrictions();
+      if (Platform.OS === 'android') {
+         await this.checkAndroidNotificationPermission();
+         await this.checkAndroidChannelPermission('callinvite');
+         await this.checkBatteryOptimization();
+         await this.checkPowerManagerRestrictions();
+      }
+      // For ios 
+      else {
+         await this.requestiOSUserPermission();
+      }
    }
    async checkAndroidNotificationPermission() {
       const settings = await notifee.getNotificationSettings();
@@ -254,8 +294,11 @@ class App extends Component {
    }
    async checkAndroidChannelPermission(channelId) {
       const channel = await notifee.getChannel(channelId);
+      console.log(">>>>>>>>", channel)
 
-      if (channel.blocked) {
+      if (!channel) {
+         console.warn('Channel has not been created!');
+      } else if (channel.blocked) {
          console.log('Channel is disabled');
          Alert.alert(
             'Restrictions Detected',
