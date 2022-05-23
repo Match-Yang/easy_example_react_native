@@ -163,7 +163,7 @@ const profile = {
     appID: config.appID,
     scenario: ZegoScenario.General,
 } as ZegoEngineProfile;
-ZegoExpressManager.instance().createEngine(profile);
+ZegoExpressManager.createEngine(profile);
 ```
 
 #### Register related callbacks
