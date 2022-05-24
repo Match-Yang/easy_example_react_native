@@ -103,6 +103,10 @@ Copy the `ZegoExpressManager` folder, `img` folder, `pages` folder and `App.js` 
 ```json
 "dependencies": {
     ...
+    "react-native-reanimated": "^2.8.0",
+    "react-native-safe-area-context": "^4.2.5",
+    "react-native-gesture-handler": "^2.4.2",
+    "react-native-screens": "^3.13.1",
     "@notifee/react-native": "^5.2.1",
     "@react-native-firebase/app": "^14.9.2",
     "@react-native-firebase/messaging": "^14.9.2",
