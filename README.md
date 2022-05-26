@@ -90,6 +90,7 @@ $ yarn ios
 
 ## Integrate the SDK into your own project
 
+[![project](docs/images/youtube.jpg)](https://www.youtube.com/watch?v=ABi11TGua3s)
 The following will describe how to build your own project based on this project.
 
 ### Copy the source code
