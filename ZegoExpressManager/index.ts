@@ -17,6 +17,13 @@ import {
   ZegoParticipant,
 } from './index.entity';
 
+/// A wrapper for using ZegoExpressEngine's methods
+///
+/// We do some basic logic inside this class, if you use it somewhere then we will recommend you use it anywhere.
+/// If you don't understand ZegoExpressEngine very well, do not mix two of the class on your code.
+/// Instead you should use every methods call of ZegoExpressEngine inside this class
+/// and do everything you want via ZegoExpressManager
+/// Read more about ZegoExpressEngine: https://docs.zegocloud.com/article/13577
 export class ZegoExpressManager {
   // key is UserID, value is participant model
   private participantDic: Map<string, ZegoParticipant> = new Map();
@@ -35,6 +42,7 @@ export class ZegoExpressManager {
     userID: string,
     roomID: string,
   ) => void)[] = [];
+
   static shared: ZegoExpressManager;
   private constructor() {
     if (!ZegoExpressManager.shared) {
@@ -43,9 +51,18 @@ export class ZegoExpressManager {
     }
     return ZegoExpressManager.shared;
   }
+
+  /// Instance of ZegoExpressManager
+  ///
+  /// You should call all of the method via this instance
   static instance() {
     return ZegoExpressManager.shared;
   }
+
+  /// Create SDK instance and setup some callbacks
+  ///
+  /// You need to call createEngine before call any of other methods of the SDK
+  /// Read more about it: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#createengine
   static createEngine(profile: ZegoEngineProfile): Promise<ZegoExpressEngine> {
     ZegoExpressManager.shared = new ZegoExpressManager();
     return ZegoExpressEngine.createEngineWithProfile(profile).then(
@@ -56,6 +73,14 @@ export class ZegoExpressManager {
       },
     );
   }
+  /// User [user] joins into the room with id [roomID] with [options] and then can talk to others who are in the room
+  ///
+  /// Options are different from scenario to scenario, here are some example
+  /// Video Call: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+  /// Live Streaming: - host: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+  /// Live Streaming: - audience:[ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio]
+  /// Chat Room: - host:[ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio]
+  /// Chat Room: - audience:[ZegoMediaOption.autoPlayAudio]
   joinRoom(
     roomID: string,
     token: string,
@@ -113,6 +138,7 @@ export class ZegoExpressManager {
         return true;
       });
   }
+  /// Turn on your camera if [enable] is true
   enableCamera(enable: boolean): Promise<void> {
     this.localParticipant.camera = enable;
     return ZegoExpressEngine.instance()
@@ -121,6 +147,7 @@ export class ZegoExpressManager {
         console.warn('ZEGO RN LOG - enableCamera success', enable);
       });
   }
+ /// Turn on your microphone if [enable] is true
   enableMic(enable: boolean): Promise<void> {
     this.localParticipant.mic = enable;
     return ZegoExpressEngine.instance()
@@ -129,6 +156,7 @@ export class ZegoExpressManager {
         console.warn('ZEGO RN LOG - muteMicrophone success', !enable);
       });
   }
+  /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video
   setLocalVideoView(renderView: number) {
     if (!this.roomID) {
       console.error(
@@ -147,6 +175,7 @@ export class ZegoExpressManager {
         console.warn('ZEGO RN LOG - startPreview success');
       });
   }
+  /// Set the tag value of ref control which can obtain by findNodeHandle method to render video of user with id [userID]
   setRemoteVideoView(userID: string, renderView: number) {
     if (renderView === null) {
       console.error('ZEGO RN LOG - You need to pass in the correct element');
@@ -168,6 +197,7 @@ export class ZegoExpressManager {
     }
     this.playStream(userID);
   }
+  /// Leave the room when you are done the talk or if you want to join another room
   leaveRoom(): Promise<void> {
     const roomID = this.roomID;
     ZegoExpressEngine.instance().stopPublishingStream();
@@ -197,6 +227,14 @@ export class ZegoExpressManager {
         console.warn('ZEGO RN LOG - logoutRoom success');
       });
   }
+
+  /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
+  renewToken(roomID: string, token: string): Promise<void> {
+    return ZegoExpressEngine.instance().renewToken(roomID, token).then(() => {
+      console.warn('ZEGO RN LOG - renewToken success');
+    });
+  }
+  /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   onRoomUserUpdate(
     fun: (
       updateType: ZegoUpdateType,
@@ -215,6 +253,7 @@ export class ZegoExpressManager {
       },
     );
   }
+  /// Trigger when device's status of user with [userID] has been update
   onRoomUserDeviceUpdate(
     fun: (
       updateType: ZegoDeviceUpdateType,
@@ -224,6 +263,7 @@ export class ZegoExpressManager {
   ) {
     this.deviceUpdateCallback.push(fun);
   }
+  /// Trigger when the access token will expire which mean you should call renewToken to set new token
   onRoomTokenWillExpire(
     fun: (roomID: string, remainTimeInSecond: number) => void,
   ) {
@@ -274,6 +314,7 @@ export class ZegoExpressManager {
         });
       },
     );
+    // Register callback, read more about: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#on
     ZegoExpressEngine.instance().on(
       'roomStreamUpdate',
       (

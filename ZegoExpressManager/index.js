@@ -39,6 +39,13 @@ exports.__esModule = true;
 exports.ZegoExpressManager = void 0;
 var zego_express_engine_reactnative_1 = require("zego-express-engine-reactnative");
 var index_entity_1 = require("./index.entity");
+/// A wrapper for using ZegoExpressEngine's methods
+///
+/// We do some basic logic inside this class, if you use it somewhere then we will recommend you use it anywhere.
+/// If you don't understand ZegoExpressEngine very well, do not mix two of the class on your code.
+/// Instead you should use every methods call of ZegoExpressEngine inside this class
+/// and do everything you want via ZegoExpressManager
+/// Read more about ZegoExpressEngine: https://docs.zegocloud.com/article/13577
 var ZegoExpressManager = /** @class */ (function () {
     function ZegoExpressManager() {
         // key is UserID, value is participant model
@@ -59,9 +66,16 @@ var ZegoExpressManager = /** @class */ (function () {
         }
         return ZegoExpressManager.shared;
     }
+    /// Instance of ZegoExpressManager
+    ///
+    /// You should call all of the method via this instance
     ZegoExpressManager.instance = function () {
         return ZegoExpressManager.shared;
     };
+    /// Create SDK instance and setup some callbacks
+    ///
+    /// You need to call createEngine before call any of other methods of the SDK
+    /// Read more about it: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#createengine
     ZegoExpressManager.createEngine = function (profile) {
         ZegoExpressManager.shared = new ZegoExpressManager();
         return zego_express_engine_reactnative_1["default"].createEngineWithProfile(profile).then(function (engine) {
@@ -70,6 +84,14 @@ var ZegoExpressManager = /** @class */ (function () {
             return engine;
         });
     };
+    /// User [user] joins into the room with id [roomID] with [options] and then can talk to others who are in the room
+    ///
+    /// Options are different from scenario to scenario, here are some example
+    /// Video Call: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+    /// Live Streaming: - host: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+    /// Live Streaming: - audience:[ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio]
+    /// Chat Room: - host:[ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio]
+    /// Chat Room: - audience:[ZegoMediaOption.autoPlayAudio]
     ZegoExpressManager.prototype.joinRoom = function (roomID, token, user, options) {
         var _this = this;
         if (!token) {
@@ -112,6 +134,7 @@ var ZegoExpressManager = /** @class */ (function () {
             });
         }); });
     };
+    /// Turn on your camera if [enable] is true
     ZegoExpressManager.prototype.enableCamera = function (enable) {
         this.localParticipant.camera = enable;
         return zego_express_engine_reactnative_1["default"].instance()
@@ -120,6 +143,7 @@ var ZegoExpressManager = /** @class */ (function () {
             console.warn('ZEGO RN LOG - enableCamera success', enable);
         });
     };
+    /// Turn on your microphone if [enable] is true
     ZegoExpressManager.prototype.enableMic = function (enable) {
         this.localParticipant.mic = enable;
         return zego_express_engine_reactnative_1["default"].instance()
@@ -128,6 +152,7 @@ var ZegoExpressManager = /** @class */ (function () {
             console.warn('ZEGO RN LOG - muteMicrophone success', !enable);
         });
     };
+    /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video
     ZegoExpressManager.prototype.setLocalVideoView = function (renderView) {
         if (!this.roomID) {
             console.error('ZEGO RN LOG - You need to join the room first and then set the videoView');
@@ -144,6 +169,7 @@ var ZegoExpressManager = /** @class */ (function () {
             console.warn('ZEGO RN LOG - startPreview success');
         });
     };
+    /// Set the tag value of ref control which can obtain by findNodeHandle method to render video of user with id [userID]
     ZegoExpressManager.prototype.setRemoteVideoView = function (userID, renderView) {
         if (renderView === null) {
             console.error('ZEGO RN LOG - You need to pass in the correct element');
@@ -164,6 +190,7 @@ var ZegoExpressManager = /** @class */ (function () {
         }
         this.playStream(userID);
     };
+    /// Leave the room when you are done the talk or if you want to join another room
     ZegoExpressManager.prototype.leaveRoom = function () {
         var roomID = this.roomID;
         zego_express_engine_reactnative_1["default"].instance().stopPublishingStream();
@@ -192,6 +219,13 @@ var ZegoExpressManager = /** @class */ (function () {
             console.warn('ZEGO RN LOG - logoutRoom success');
         });
     };
+    /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
+    ZegoExpressManager.prototype.renewToken = function (roomID, token) {
+        return zego_express_engine_reactnative_1["default"].instance().renewToken(roomID, token).then(function () {
+            console.warn('ZEGO RN LOG - renewToken success');
+        });
+    };
+    /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
     ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
         return zego_express_engine_reactnative_1["default"].instance().on('roomUserUpdate', function (roomID, updateType, userList) {
             var userIDList = [];
@@ -201,9 +235,11 @@ var ZegoExpressManager = /** @class */ (function () {
             fun(updateType, userIDList, roomID);
         });
     };
+    /// Trigger when device's status of user with [userID] has been update
     ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
         this.deviceUpdateCallback.push(fun);
     };
+    /// Trigger when the access token will expire which mean you should call renewToken to set new token
     ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
         return zego_express_engine_reactnative_1["default"].instance().on('roomTokenWillExpire', fun);
     };
@@ -242,6 +278,7 @@ var ZegoExpressManager = /** @class */ (function () {
                 }
             });
         });
+        // Register callback, read more about: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#on
         zego_express_engine_reactnative_1["default"].instance().on('roomStreamUpdate', function (roomID, updateType, streamList) {
             console.warn('ZEGO RN LOG - roomStreamUpdate callback', roomID, updateType, streamList);
             streamList.forEach(function (stream) {
