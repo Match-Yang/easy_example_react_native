@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   PermissionsAndroid,
   Platform,
@@ -8,15 +8,15 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
+import { Actions } from 'react-native-router-flux';
 
 import ZegoExpressEngine, {
   ZegoTextureView,
   ZegoScenario,
   ZegoUpdateType,
 } from 'zego-express-engine-reactnative';
-import {ZegoExpressManager} from '../ZegoExpressManager';
-import {ZegoMediaOptions} from '../ZegoExpressManager/index.entity';
+import { ZegoExpressManager } from '../ZegoExpressManager';
+import { ZegoMediaOptions } from '../ZegoExpressManager/index.entity';
 
 const styles = StyleSheet.create({
   // ZegoEasyExample
@@ -99,9 +99,12 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class CallPage extends Component {
-  viewRef1;
-  viewRef2;
+/// LivePage use for display the Host and the Co-Host Video view
+///
+/// TODO You can copy the completed class to your project
+export default class LivePage extends Component {
+  hostViewRef;
+  coHostViewRef;
   appID;
   token;
   roomID;
@@ -111,21 +114,21 @@ export default class CallPage extends Component {
     cameraEnable: true,
     micEnable: true,
     isHost: true,
-    isSeat: false,
+    isCoHost: false,
     coHostID: null,
     hostID: null,
   };
   state = {
-    hideView1: false,
-    hideView2: false,
-    hideCameraView: true,
-    hideMicView: true,
-    hideSeatView: true,
+    hideHostView: false,
+    hideCoHostView: false,
+    cameraIconVisible: false,
+    micIconVisible: false,
+    coHostIconVisible: false,
   };
   constructor(props) {
     super(props);
-    this.viewRef1 = React.createRef();
-    this.viewRef2 = React.createRef();
+    this.hostViewRef = React.createRef();
+    this.coHostViewRef = React.createRef();
     this.appID = parseInt(props.appID, 10);
     this.token = props.token;
     this.roomID = props.roomID;
@@ -162,13 +165,14 @@ export default class CallPage extends Component {
           userList.forEach(userID => {
             if (updateType === 0) {
               if (this.data.hostID === userID) {
-                this.triggerRenderViewCon1(true, 'remote', userID);
+                this.showHostView(true, 'remote', userID);
               }
             } else {
               if (this.data.coHostID === userID) {
+                // We use room's extra info to mark the host and co-host
                 ZegoExpressManager.instance().setRoomExtraInfo('coHostID', '-');
                 this.data.coHostID = '-';
-                this.triggerRenderViewCon2(false);
+                this.showCoHostView(false);
               }
             }
           });
@@ -198,15 +202,15 @@ export default class CallPage extends Component {
           this.data.coHostID = roomExtraInfo.value;
 
           if (roomExtraInfo.value === '-') {
-            this.triggerRenderViewCon2(false);
+            this.showCoHostView(false);
           } else {
-            this.triggerRenderViewCon2(true, 'remote', this.data.coHostID);
+            this.showCoHostView(true, 'remote', this.data.coHostID);
           }
         } else if (roomExtraInfo.key === 'hostID') {
           // Host
           this.data.hostID = roomExtraInfo.value;
 
-          this.triggerRenderViewCon1(true, 'remote', this.data.hostID);
+          this.showHostView(true, 'remote', this.data.hostID);
         }
       });
     });
@@ -214,6 +218,7 @@ export default class CallPage extends Component {
       console.warn('[ZEGOCLOUD Log][Demo][onRoomStateUpdate]', state);
       // state: 0 "DISCONNECTED" | 1 "CONNECTING" | 2 "CONNECTED"
       if (state === 2 && this.data.isHost) {
+        // We use room's extra info to mark the host and co-host
         ZegoExpressManager.instance().setRoomExtraInfo('hostID', this.userID);
         this.data.hostID = this.userID;
       }
@@ -255,141 +260,143 @@ export default class CallPage extends Component {
       );
     }
   }
+  // For host join the room and start live streaming and for audience join room and play straming
   joinRoom() {
     const options = this.data.isHost
       ? [
-          ZegoMediaOptions.PublishLocalAudio,
-          ZegoMediaOptions.PublishLocalVideo,
-          ZegoMediaOptions.AutoPlayAudio,
-          ZegoMediaOptions.AutoPlayVideo,
-        ]
+        ZegoMediaOptions.PublishLocalAudio,
+        ZegoMediaOptions.PublishLocalVideo,
+        ZegoMediaOptions.AutoPlayAudio,
+        ZegoMediaOptions.AutoPlayVideo,
+      ]
       : [ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.AutoPlayVideo];
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
         this.token,
-        {userID: this.userID, userName: this.userName},
+        { userID: this.userID, userName: this.userName },
         options,
       )
       .then(result => {
         if (result) {
           console.warn('Login successful');
           if (this.data.isHost) {
-            this.triggerRenderViewCon1(true, 'local');
-            this.triggerCameraView(true);
-            this.triggerMicView(true);
-            this.triggerSeatView(false);
+            this.showHostView(true, 'local');
+            this.setCameraIconVisible(true);
+            this.setMicIconVisible(true);
+            this.setCoHostIconVisible(false);
           } else {
-            this.triggerCameraView(false);
-            this.triggerMicView(false);
-            this.triggerSeatView(true);
+            this.setCameraIconVisible(false);
+            this.setMicIconVisible(false);
+            this.setCoHostIconVisible(true);
           }
         } else {
           console.warn('Login failed!', result);
         }
       });
   }
-  // Switch camera
-  enableCamera() {
+  // Switch camera on/off
+  toggleCamera() {
     ZegoExpressManager.instance()
       .enableCamera(!this.data.cameraEnable)
       .then(() => {
         this.data.cameraEnable = !this.data.cameraEnable;
       });
   }
-  // Switch microphone
-  enableMic() {
+  // Switch microphone on/off
+  toggleMic() {
     ZegoExpressManager.instance()
       .enableMic(!this.data.micEnable)
       .then(() => {
         this.data.micEnable = !this.data.micEnable;
       });
   }
-  seatHandle() {
+  toggleCoHost() {
     if (this.data.isHost) {
       return;
     }
-    !this.data.isSeat ? this.up() : this.down();
+    !this.data.isCoHost ? this.requestcohost() : this.leavecohost();
   }
-  async up() {
+  async requestcohost() {
     if (this.data.coHostID && this.data.coHostID !== '-') {
       // There's someone at the mic
       return;
     }
-    this.triggerRenderViewCon2(true, 'local');
+    this.showCoHostView(true, 'local');
 
     await ZegoExpressManager.instance().enableCamera(true);
     await ZegoExpressManager.instance().enableMic(true);
+    // We use room's extra info to mark the host and co-host
     await ZegoExpressManager.instance().setRoomExtraInfo(
       'coHostID',
       this.userID,
     );
 
     this.data.coHostID = this.userID;
-    this.data.isSeat = true;
+    this.data.isCoHost = true;
 
-    this.triggerCameraView(true);
-    this.triggerMicView(true);
+    this.setCameraIconVisible(true);
+    this.setMicIconVisible(true);
   }
-  async down() {
+  async leavecohost() {
     await ZegoExpressManager.instance().enableCamera(false);
     await ZegoExpressManager.instance().enableMic(false);
+    // We use room's extra info to mark the host and co-host
     await ZegoExpressManager.instance().setRoomExtraInfo('coHostID', '-');
 
     this.data.coHostID = '-';
-    this.data.isSeat = false;
+    this.data.isCoHost = false;
 
-    this.triggerRenderViewCon2(false);
-    this.triggerCameraView(false);
-    this.triggerMicView(false);
+    this.showCoHostView(false);
+    this.setCameraIconVisible(false);
+    this.setMicIconVisible(false);
   }
-  // Leave room
   leaveRoom() {
     ZegoExpressManager.instance()
       .leaveRoom()
       .then(() => {
         console.warn('Leave successful');
-        this.triggerRenderViewCon1(false);
-        this.triggerRenderViewCon2(false);
+        this.showHostView(false);
+        this.showCoHostView(false);
         ZegoExpressManager.destroyEngine();
         // Back to home page
         Actions.home();
       });
   }
-  triggerRenderViewCon1(show, type, userID) {
+  showHostView(show, type, userID) {
     if (show) {
-      this.setState({hideView1: false});
-      const renderView = findNodeHandle(this.viewRef1.current);
+      this.setState({ hideHostView: false });
+      const renderView = findNodeHandle(this.hostViewRef.current);
       if (type === 'remote') {
         ZegoExpressManager.instance().setRemoteVideoView(userID, renderView);
       } else {
         ZegoExpressManager.instance().setLocalVideoView(renderView);
       }
     } else {
-      this.setState({hideView1: true});
+      this.setState({ hideHostView: true });
     }
   }
-  triggerRenderViewCon2(show, type, userID) {
+  showCoHostView(show, type, userID) {
     if (show) {
-      this.setState({hideView2: false});
-      const renderView = findNodeHandle(this.viewRef2.current);
+      this.setState({ hideCoHostView: false });
+      const renderView = findNodeHandle(this.coHostViewRef.current);
       if (type === 'remote') {
         ZegoExpressManager.instance().setRemoteVideoView(userID, renderView);
       } else {
         ZegoExpressManager.instance().setLocalVideoView(renderView);
       }
     } else {
-      this.setState({hideView2: true});
+      this.setState({ hideCoHostView: true });
     }
   }
-  triggerSeatView(show) {
-    this.setState({hideSeatView: !show});
+  setCoHostIconVisible(visible) {
+    this.setState({ coHostIconVisible: visible });
   }
-  triggerCameraView(show) {
-    this.setState({hideCameraView: !show});
+  setCameraIconVisible(visible) {
+    this.setState({ cameraIconVisible: visible });
   }
-  triggerMicView(show) {
-    this.setState({hideMicView: !show});
+  setMicIconVisible(visible) {
+    this.setState({ micIconVisible: visible });
   }
   render() {
     return (
@@ -397,10 +404,10 @@ export default class CallPage extends Component {
         <View
           style={[
             styles.preview,
-            this.state.hideView1 ? styles.hideView : styles.showView,
+            this.state.hideHostView ? styles.hideView : styles.showView,
           ]}>
           <ZegoTextureView
-            ref={this.viewRef1}
+            ref={this.hostViewRef}
             // @ts-ignore
             style={styles.previewView}
           />
@@ -408,10 +415,10 @@ export default class CallPage extends Component {
         <View
           style={[
             styles.play,
-            this.state.hideView2 ? styles.hideView : styles.showView,
+            this.state.hideCoHostView ? styles.hideView : styles.showView,
           ]}>
           <ZegoTextureView
-            ref={this.viewRef2}
+            ref={this.coHostViewRef}
             // @ts-ignore
             style={styles.playView}
           />
@@ -428,9 +435,9 @@ export default class CallPage extends Component {
           <TouchableOpacity
             style={[
               styles.imageCon,
-              this.state.hideCameraView ? styles.hide : styles.show,
+              this.state.cameraIconVisible ? styles.show : styles.hide,
             ]}
-            onPress={this.enableCamera.bind(this)}>
+            onPress={this.toggleCamera.bind(this)}>
             <Image
               style={styles.image}
               source={require('../img/icon_camera.png')}
@@ -439,9 +446,9 @@ export default class CallPage extends Component {
           <TouchableOpacity
             style={[
               styles.imageCon,
-              this.state.hideMicView ? styles.hide : styles.show,
+              this.state.micIconVisible ? styles.show : styles.hide,
             ]}
-            onPress={this.enableMic.bind(this)}>
+            onPress={this.toggleMic.bind(this)}>
             <Image
               style={styles.image}
               source={require('../img/icon_mic.png')}
@@ -450,9 +457,9 @@ export default class CallPage extends Component {
           <TouchableOpacity
             style={[
               styles.imageCon,
-              this.state.hideSeatView ? styles.hide : styles.show,
+              this.state.coHostIconVisible ? styles.show : styles.hide,
             ]}
-            onPress={this.seatHandle.bind(this)}>
+            onPress={this.toggleCoHost.bind(this)}>
             <Image
               style={styles.seatImage}
               source={require('../img/icon_cohost.png')}

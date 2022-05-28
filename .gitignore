@@ -20,6 +20,7 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
+ios/ZegoEasyExample.xcodeproj/project.pbxproj
 
 # Android/IntelliJ
 #
