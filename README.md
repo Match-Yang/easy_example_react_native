@@ -99,6 +99,7 @@ $ yarn ios
 ```
 
 ## Integrate the SDK into your own project
+[![](media/youtube.jpg)](https://www.youtube.com/watch?v=h87xVWpXdhE)
 
 The following will describe how to build your own project based on this project.
 
