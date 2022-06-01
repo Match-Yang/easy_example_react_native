@@ -143,6 +143,8 @@ export default class CallPage extends Component {
     };
     ZegoExpressManager.createEngine(profile).then(async () => {
       console.warn('ZegoExpressEngine created!');
+      // Clear previously registered callbacks
+      this.unRegisterCallback();
       // Register callback
       this.registerCallback();
 
@@ -151,7 +153,7 @@ export default class CallPage extends Component {
     });
   }
   componentWillUnmount() {
-    ZegoExpressManager.instance().leaveRoom();
+    this.leaveRoom();
   }
 
   registerCallback() {
@@ -180,6 +182,16 @@ export default class CallPage extends Component {
         ZegoExpressEngine.instance().renewToken(roomID, token);
       },
     );
+    ZegoExpressManager.instance().onRoomStateUpdate(state => {
+      console.warn('out roomStateUpdate', state);
+    });
+  }
+  unRegisterCallback() {
+    // If the parameter is null, the previously registered callback is cleared
+    ZegoExpressManager.instance().onRoomUserUpdate();
+    ZegoExpressManager.instance().onRoomUserDeviceUpdate();
+    ZegoExpressManager.instance().onRoomTokenWillExpire();
+    ZegoExpressManager.instance().onRoomStateUpdate();
   }
   async grantPermissions() {
     // Android: Dynamically obtaining device permissions
@@ -269,6 +281,8 @@ export default class CallPage extends Component {
       .leaveRoom()
       .then(() => {
         console.warn('Leave successful');
+        console.warn('ZegoExpressEngine destroyed!');
+        ZegoExpressManager.destroyEngine();
         // Back to home page
         Actions.home();
       });

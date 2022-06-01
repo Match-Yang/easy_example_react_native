@@ -155,13 +155,12 @@ var ZegoExpressManager = /** @class */ (function () {
     // key is streamID, value is participant model
     this.streamDic = new Map();
     this.roomID = '';
-    this.mediaOptions = [
-      index_entity_1.ZegoMediaOptions.AutoPlayAudio,
-      index_entity_1.ZegoMediaOptions.AutoPlayVideo,
-      index_entity_1.ZegoMediaOptions.PublishLocalAudio,
-      index_entity_1.ZegoMediaOptions.PublishLocalVideo,
-    ];
+    this.mediaOptions = [];
     this.deviceUpdateCallback = [];
+    this.roomStateUpdateCallback = [];
+    this.roomTokenWillExpireCallback = [];
+    this.roomUserUpdateCallback = [];
+    this.onOtherEventSwitch = false;
     if (!ZegoExpressManager.shared) {
       this.localParticipant = {};
       ZegoExpressManager.shared = this;
@@ -176,9 +175,28 @@ var ZegoExpressManager = /** @class */ (function () {
     return zego_express_engine_reactnative_1.default
       .createEngineWithProfile(profile)
       .then(function (engine) {
-        console.warn('ZEGO RN LOG - createEngine success');
-        ZegoExpressManager.shared.onOtherEvent();
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][createEngineWithProfile] - Create success',
+        );
+        if (!ZegoExpressManager.shared.onOtherEventSwitch) {
+          ZegoExpressManager.shared.onOtherEvent();
+          ZegoExpressManager.shared.onOtherEventSwitch = true;
+        }
         return engine;
+      });
+  };
+  ZegoExpressManager.destroyEngine = function () {
+    ZegoExpressManager.shared.offOtherEvent();
+    ZegoExpressManager.shared.onOtherEventSwitch = false;
+    return zego_express_engine_reactnative_1.default
+      .destroyEngine()
+      .then(function () {
+        ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
+        ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+        // @ts-ignore
+        ZegoExpressManager.shared = null;
       });
   };
   ZegoExpressManager.prototype.joinRoom = function (
@@ -189,11 +207,19 @@ var ZegoExpressManager = /** @class */ (function () {
   ) {
     var _this = this;
     if (!token) {
-      console.error('ZEGO RN LOG - token is empty, please enter a right token');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][joinRoom] - Token is empty, please enter a right token',
+      );
+      return Promise.resolve(false);
+    }
+    if (!options) {
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][joinRoom] - Options is empty, please enter a right options',
+      );
       return Promise.resolve(false);
     }
     this.roomID = roomID;
-    options && (this.mediaOptions = options);
+    this.mediaOptions = options;
     this.localParticipant.userID = user.userID;
     this.localParticipant.name = user.userName;
     this.localParticipant.streamID = this.generateStreamID(user.userID, roomID);
@@ -215,7 +241,9 @@ var ZegoExpressManager = /** @class */ (function () {
           return __generator(this, function (_a) {
             switch (_a.label) {
               case 0:
-                console.warn('ZEGO RN LOG - joinRoom success');
+                console.warn(
+                  '[ZEGOCLOUD LOG][Manager][loginRoom] - Login success',
+                );
                 this.localParticipant.camera = this.mediaOptions.includes(
                   index_entity_1.ZegoMediaOptions.PublishLocalVideo,
                 );
@@ -235,7 +263,9 @@ var ZegoExpressManager = /** @class */ (function () {
                 ];
               case 1:
                 _a.sent();
-                console.warn('ZEGO RN LOG - startPublishingStream success');
+                console.warn(
+                  '[ZEGOCLOUD LOG][Manager][startPublishingStream] - Publish success',
+                );
                 return [
                   4 /*yield*/,
                   zego_express_engine_reactnative_1.default
@@ -244,10 +274,6 @@ var ZegoExpressManager = /** @class */ (function () {
                 ];
               case 2:
                 _a.sent();
-                console.warn(
-                  'ZEGO RN LOG - enableCamera success',
-                  this.localParticipant.camera,
-                );
                 return [
                   4 /*yield*/,
                   zego_express_engine_reactnative_1.default
@@ -257,7 +283,11 @@ var ZegoExpressManager = /** @class */ (function () {
               case 3:
                 _a.sent();
                 console.warn(
-                  'ZEGO RN LOG - muteMicrophone success',
+                  '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
+                  this.localParticipant.camera,
+                );
+                console.warn(
+                  '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
                   !this.localParticipant.mic,
                 );
                 _a.label = 4;
@@ -274,7 +304,10 @@ var ZegoExpressManager = /** @class */ (function () {
       .instance()
       .enableCamera(enable)
       .then(function () {
-        console.warn('ZEGO RN LOG - enableCamera success', enable);
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][enableCamera] - Enable success',
+          enable,
+        );
       });
   };
   ZegoExpressManager.prototype.enableMic = function (enable) {
@@ -283,18 +316,23 @@ var ZegoExpressManager = /** @class */ (function () {
       .instance()
       .muteMicrophone(!enable)
       .then(function () {
-        console.warn('ZEGO RN LOG - muteMicrophone success', !enable);
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
+          !enable,
+        );
       });
   };
   ZegoExpressManager.prototype.setLocalVideoView = function (renderView) {
     if (!this.roomID) {
       console.error(
-        'ZEGO RN LOG - You need to join the room first and then set the videoView',
+        '[ZEGOCLOUD LOG][Manager][setLocalVideoView] - You need to join the room first and then set the videoView',
       );
       return;
     }
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][setLocalVideoView] - You need to pass in the correct element',
+      );
       return;
     }
     var zegoView = new zego_express_engine_reactnative_1.ZegoView(
@@ -306,7 +344,9 @@ var ZegoExpressManager = /** @class */ (function () {
       .instance()
       .startPreview(zegoView)
       .then(function () {
-        console.warn('ZEGO RN LOG - startPreview success');
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][startPreview] - Preview success',
+        );
       });
   };
   ZegoExpressManager.prototype.setRemoteVideoView = function (
@@ -314,12 +354,14 @@ var ZegoExpressManager = /** @class */ (function () {
     renderView,
   ) {
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error(
+        '[ZEGOCLOUD LOG][Manager][setRemoteVideoView] - You need to pass in the correct element',
+      );
       return;
     }
     if (!userID) {
       console.error(
-        'ZEGO RN LOG - userID is empty, please enter a right userID',
+        '[ZEGOCLOUD LOG][Manager][setRemoteVideoView] - UserID is empty, please enter a right userID',
       );
     }
     var participant = this.participantDic.get(userID);
@@ -334,64 +376,72 @@ var ZegoExpressManager = /** @class */ (function () {
     this.playStream(userID);
   };
   ZegoExpressManager.prototype.leaveRoom = function () {
+    console.warn(
+      '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop publishing stream',
+    );
+    console.warn('[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop preview');
     var roomID = this.roomID;
     zego_express_engine_reactnative_1.default.instance().stopPublishingStream();
-    console.warn('ZEGO RN LOG - stopPublishingStream');
     zego_express_engine_reactnative_1.default.instance().stopPreview();
-    console.warn('ZEGO RN LOG - stopPreview');
     this.participantDic.forEach(function (participant) {
       zego_express_engine_reactnative_1.default
         .instance()
         .stopPlayingStream(participant.streamID);
-      console.warn('ZEGO RN LOG - stopPlayingStream', participant.streamID);
+      console.warn(
+        '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop playing stream',
+        participant.streamID,
+      );
     });
     this.participantDic.clear();
     this.streamDic.clear();
     this.roomID = '';
     // @ts-ignore
     this.localParticipant = {};
-    this.deviceUpdateCallback.length = 0;
-    this.mediaOptions = [
-      index_entity_1.ZegoMediaOptions.AutoPlayAudio,
-      index_entity_1.ZegoMediaOptions.AutoPlayVideo,
-      index_entity_1.ZegoMediaOptions.PublishLocalAudio,
-      index_entity_1.ZegoMediaOptions.PublishLocalVideo,
-    ];
+    this.mediaOptions = [];
     return zego_express_engine_reactnative_1.default
       .instance()
       .logoutRoom(roomID)
       .then(function () {
-        console.warn('ZEGO RN LOG - logoutRoom success');
+        console.warn('[ZEGOCLOUD LOG][Manager][logoutRoom] - Logout success');
       });
   };
   ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomUserUpdate', function (roomID, updateType, userList) {
-        var userIDList = [];
-        userList.forEach(function (user) {
-          userIDList.push(user.userID);
-        });
-        fun(updateType, userIDList, roomID);
-      });
+    if (fun) {
+      this.roomUserUpdateCallback.push(fun);
+    } else {
+      this.roomUserUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
-    this.deviceUpdateCallback.push(fun);
+    if (fun) {
+      this.deviceUpdateCallback.push(fun);
+    } else {
+      this.deviceUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomTokenWillExpire', fun);
+    if (fun) {
+      this.roomTokenWillExpireCallback.push(fun);
+    } else {
+      this.roomTokenWillExpireCallback.length = 0;
+    }
+  };
+  ZegoExpressManager.prototype.onRoomStateUpdate = function (fun) {
+    if (fun) {
+      this.roomStateUpdateCallback.push(fun);
+    } else {
+      this.roomStateUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.generateStreamID = function (userID, roomID) {
     if (!userID) {
       console.error(
-        'ZEGO RN LOG - userID is empty, please enter a right userID',
+        '[ZEGOCLOUD LOG][Manager][generateStreamID] - UserID is empty, please enter a right userID',
       );
     }
     if (!roomID) {
       console.error(
-        'ZEGO RN LOG - roomID is empty, please enter a right roomID',
+        '[ZEGOCLOUD LOG][Manager][generateStreamID] - RoomID is empty, please enter a right roomID',
       );
     }
     // The streamID can use any character.
@@ -405,12 +455,14 @@ var ZegoExpressManager = /** @class */ (function () {
       .instance()
       .on('roomUserUpdate', function (roomID, updateType, userList) {
         console.warn(
-          'ZEGO RN LOG - roomUserUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomUserUpdate]',
           roomID,
           updateType,
           userList,
         );
+        var userIDList = [];
         userList.forEach(function (user) {
+          userIDList.push(user.userID);
           if (
             updateType === zego_express_engine_reactnative_1.ZegoUpdateType.Add
           ) {
@@ -428,12 +480,15 @@ var ZegoExpressManager = /** @class */ (function () {
             _this.participantDic.delete(user.userID);
           }
         });
+        _this.roomUserUpdateCallback.forEach(function (fun) {
+          fun(updateType, userIDList, roomID);
+        });
       });
     zego_express_engine_reactnative_1.default
       .instance()
       .on('roomStreamUpdate', function (roomID, updateType, streamList) {
         console.warn(
-          'ZEGO RN LOG - roomStreamUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomStreamUpdate]',
           roomID,
           updateType,
           streamList,
@@ -492,6 +547,11 @@ var ZegoExpressManager = /** @class */ (function () {
     zego_express_engine_reactnative_1.default
       .instance()
       .on('remoteCameraStateUpdate', function (streamID, state) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][remoteCameraStatusUpdate]',
+          streamID,
+          state,
+        );
         var participant = _this.streamDic.get(streamID);
         if (participant) {
           var updateType_1 =
@@ -512,6 +572,11 @@ var ZegoExpressManager = /** @class */ (function () {
     zego_express_engine_reactnative_1.default
       .instance()
       .on('remoteMicStateUpdate', function (streamID, state) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][remoteMicStatusUpdate]',
+          streamID,
+          state,
+        );
         var participant = _this.streamDic.get(streamID);
         if (participant) {
           var updateType_2 =
@@ -533,12 +598,49 @@ var ZegoExpressManager = /** @class */ (function () {
       .instance()
       .on('roomStateUpdate', function (roomID, state, errorCode) {
         console.warn(
-          'ZEGO RN LOG - roomStateUpdate callback',
+          '[ZEGOCLOUD LOG][Manager][roomStateUpdate]',
           roomID,
           state,
           errorCode,
         );
+        _this.roomStateUpdateCallback.forEach(function (fun) {
+          fun(state);
+        });
       });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('roomTokenWillExpire', function (roomID, remainTimeInSecond) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]',
+          roomID,
+          remainTimeInSecond,
+        );
+        _this.roomTokenWillExpireCallback.forEach(function (fun) {
+          fun(roomID, remainTimeInSecond);
+        });
+      });
+  };
+  ZegoExpressManager.prototype.offOtherEvent = function () {
+    zego_express_engine_reactnative_1.default.instance().off('roomUserUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomStreamUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('publisherQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('playerQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteCameraStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteMicStateUpdate');
+    zego_express_engine_reactnative_1.default.instance().off('roomStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomTokenWillExpire');
   };
   ZegoExpressManager.prototype.playStream = function (userID) {
     if (
@@ -553,6 +655,9 @@ var ZegoExpressManager = /** @class */ (function () {
           participant.renderView,
           zego_express_engine_reactnative_1.ZegoViewMode.AspectFit,
           0,
+        );
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][playStream] - Start playing stream',
         );
         zego_express_engine_reactnative_1.default
           .instance()
