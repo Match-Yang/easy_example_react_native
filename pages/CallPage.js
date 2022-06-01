@@ -110,6 +110,9 @@ const styles = StyleSheet.create({
   },
 });
 
+/// CallPage use for display the Caller Video view and the Callee Video view
+///
+/// TODO You can copy the completed class to your project
 export default class CallPage extends Component {
   localViewRef;
   remoteViewRef;
@@ -155,8 +158,9 @@ export default class CallPage extends Component {
   componentWillUnmount() {
     this.leaveRoom();
   }
-
   registerCallback() {
+    // When other user join in the same room, this method will get call
+    // Read more doc: https://doc-en-api.zego.im/ReactNative/interfaces/_zegoexpresseventhandler_.zegoeventlistener.html#roomuserupdate
     ZegoExpressManager.instance().onRoomUserUpdate(
       (updateType, userList, roomID) => {
         console.warn('out roomUserUpdate', updateType, userList, roomID);
@@ -238,7 +242,6 @@ export default class CallPage extends Component {
         });
       });
   }
-
   // Switch microphone
   enableMic() {
     ZegoExpressManager.instance()
@@ -287,7 +290,6 @@ export default class CallPage extends Component {
         Actions.home();
       });
   }
-
   render() {
     return (
       <View style={[styles.callPage, styles.showPage]}>

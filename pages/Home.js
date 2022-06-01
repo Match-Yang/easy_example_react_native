@@ -42,8 +42,10 @@ const config = {
   // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
   appID: 0,
   // Heroku server url for example
+  // Heroku server url for example
   // Get the server from: https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs
-  tokerServerUrl: '', //  https://xxx.herokuapp.com
+  // e.g. https://xxx.herokuapp.com
+  tokerServerUrl: '',
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: '123456',

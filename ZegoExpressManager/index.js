@@ -148,6 +148,13 @@ exports.__esModule = true;
 exports.ZegoExpressManager = void 0;
 var zego_express_engine_reactnative_1 = require('zego-express-engine-reactnative');
 var index_entity_1 = require('./index.entity');
+/// A wrapper for using ZegoExpressEngine's methods
+///
+/// We do some basic logic inside this class, if you use it somewhere then we will recommend you use it anywhere.
+/// If you don't understand ZegoExpressEngine very well, do not mix two of the class on your code.
+/// Instead you should use every methods call of ZegoExpressEngine inside this class
+/// and do everything you want via ZegoExpressManager
+/// Read more about ZegoExpressEngine: https://docs.zegocloud.com/article/13577
 var ZegoExpressManager = /** @class */ (function () {
   function ZegoExpressManager() {
     // key is UserID, value is participant model
@@ -167,9 +174,16 @@ var ZegoExpressManager = /** @class */ (function () {
     }
     return ZegoExpressManager.shared;
   }
+  /// Instance of ZegoExpressManager
+  ///
+  /// You should call all of the method via this instance
   ZegoExpressManager.instance = function () {
     return ZegoExpressManager.shared;
   };
+  /// Create SDK instance and setup some callbacks
+  ///
+  /// You need to call createEngine before call any of other methods of the SDK
+  /// Read more about it: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#createengine
   ZegoExpressManager.createEngine = function (profile) {
     ZegoExpressManager.shared = new ZegoExpressManager();
     return zego_express_engine_reactnative_1.default
@@ -199,6 +213,14 @@ var ZegoExpressManager = /** @class */ (function () {
         ZegoExpressManager.shared = null;
       });
   };
+  /// User [user] joins into the room with id [roomID] with [options] and then can talk to others who are in the room
+  ///
+  /// Options are different from scenario to scenario, here are some example
+  /// Video Call: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+  /// Live Streaming: - host: [ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio, ZegoMediaOption.publishLocalVideo]
+  /// Live Streaming: - audience:[ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio]
+  /// Chat Room: - host:[ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio]
+  /// Chat Room: - audience:[ZegoMediaOption.autoPlayAudio]
   ZegoExpressManager.prototype.joinRoom = function (
     roomID,
     token,
@@ -298,6 +320,7 @@ var ZegoExpressManager = /** @class */ (function () {
         });
       });
   };
+  /// Turn on your camera if [enable] is true
   ZegoExpressManager.prototype.enableCamera = function (enable) {
     this.localParticipant.camera = enable;
     return zego_express_engine_reactnative_1.default
@@ -310,6 +333,7 @@ var ZegoExpressManager = /** @class */ (function () {
         );
       });
   };
+  /// Turn on your microphone if [enable] is true
   ZegoExpressManager.prototype.enableMic = function (enable) {
     this.localParticipant.mic = enable;
     return zego_express_engine_reactnative_1.default
@@ -322,6 +346,7 @@ var ZegoExpressManager = /** @class */ (function () {
         );
       });
   };
+  /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video
   ZegoExpressManager.prototype.setLocalVideoView = function (renderView) {
     if (!this.roomID) {
       console.error(
@@ -349,6 +374,7 @@ var ZegoExpressManager = /** @class */ (function () {
         );
       });
   };
+  /// Set the tag value of ref control which can obtain by findNodeHandle method to render video of user with id [userID]
   ZegoExpressManager.prototype.setRemoteVideoView = function (
     userID,
     renderView,
@@ -375,6 +401,7 @@ var ZegoExpressManager = /** @class */ (function () {
     }
     this.playStream(userID);
   };
+  /// Leave the room when you are done the talk or if you want to join another room
   ZegoExpressManager.prototype.leaveRoom = function () {
     console.warn(
       '[ZEGOCLOUD LOG][Manager][leaveRoom] - Stop publishing stream',
@@ -405,6 +432,16 @@ var ZegoExpressManager = /** @class */ (function () {
         console.warn('[ZEGOCLOUD LOG][Manager][logoutRoom] - Logout success');
       });
   };
+  /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
+  ZegoExpressManager.prototype.renewToken = function (roomID, token) {
+    return zego_express_engine_reactnative_1.default
+      .instance()
+      .renewToken(roomID, token)
+      .then(function () {
+        console.warn('ZEGO RN LOG - renewToken success');
+      });
+  };
+  /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
     if (fun) {
       this.roomUserUpdateCallback.push(fun);
@@ -412,6 +449,7 @@ var ZegoExpressManager = /** @class */ (function () {
       this.roomUserUpdateCallback.length = 0;
     }
   };
+  /// Trigger when device's status of user with [userID] has been update
   ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
     if (fun) {
       this.deviceUpdateCallback.push(fun);
@@ -419,6 +457,7 @@ var ZegoExpressManager = /** @class */ (function () {
       this.deviceUpdateCallback.length = 0;
     }
   };
+  /// Trigger when the access token will expire which mean you should call renewToken to set new token
   ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
     if (fun) {
       this.roomTokenWillExpireCallback.push(fun);
@@ -460,6 +499,7 @@ var ZegoExpressManager = /** @class */ (function () {
           updateType,
           userList,
         );
+        // Register callback, read more about: https://doc-en-api.zego.im/ReactNative/classes/_zegoexpressengine_.zegoexpressengine.html#on
         var userIDList = [];
         userList.forEach(function (user) {
           userIDList.push(user.userID);
