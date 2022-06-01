@@ -443,6 +443,7 @@ var ZegoExpressManager = /** @class */ (function () {
   };
   /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomUserUpdateCallback.push(fun);
     } else {
@@ -450,7 +451,10 @@ var ZegoExpressManager = /** @class */ (function () {
     }
   };
   /// Trigger when device's status of user with [userID] has been update
-  ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
+  ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (
+    // If the parameter is null, the previously registered callback is cleared
+    fun,
+  ) {
     if (fun) {
       this.deviceUpdateCallback.push(fun);
     } else {
@@ -459,13 +463,16 @@ var ZegoExpressManager = /** @class */ (function () {
   };
   /// Trigger when the access token will expire which mean you should call renewToken to set new token
   ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomTokenWillExpireCallback.push(fun);
     } else {
       this.roomTokenWillExpireCallback.length = 0;
     }
   };
+  /// Trigger when room's status has been update
   ZegoExpressManager.prototype.onRoomStateUpdate = function (fun) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomStateUpdateCallback.push(fun);
     } else {

@@ -287,6 +287,7 @@ export class ZegoExpressManager {
       roomID: string,
     ) => void,
   ) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomUserUpdateCallback.push(fun);
     } else {
@@ -295,6 +296,7 @@ export class ZegoExpressManager {
   }
   /// Trigger when device's status of user with [userID] has been update
   onRoomUserDeviceUpdate(
+    // If the parameter is null, the previously registered callback is cleared
     fun?: (
       updateType: ZegoDeviceUpdateType,
       userID: string,
@@ -311,13 +313,16 @@ export class ZegoExpressManager {
   onRoomTokenWillExpire(
     fun?: (roomID: string, remainTimeInSecond: number) => void,
   ) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomTokenWillExpireCallback.push(fun);
     } else {
       this.roomTokenWillExpireCallback.length = 0;
     }
   }
+  /// Trigger when room's status has been update
   onRoomStateUpdate(fun?: (state: ZegoRoomState) => void) {
+    // If the parameter is null, the previously registered callback is cleared
     if (fun) {
       this.roomStateUpdateCallback.push(fun);
     } else {
