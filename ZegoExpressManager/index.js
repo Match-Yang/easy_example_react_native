@@ -167,6 +167,7 @@ var ZegoExpressManager = /** @class */ (function () {
     this.roomStateUpdateCallback = [];
     this.roomTokenWillExpireCallback = [];
     this.roomUserUpdateCallback = [];
+    this.broadcastMessageRecvCallback = [];
     this.onOtherEventSwitch = false;
     if (!ZegoExpressManager.shared) {
       this.localParticipant = {};
@@ -209,6 +210,7 @@ var ZegoExpressManager = /** @class */ (function () {
         ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
         ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
         ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+        ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
         // @ts-ignore
         ZegoExpressManager.shared = null;
       });
@@ -401,6 +403,20 @@ var ZegoExpressManager = /** @class */ (function () {
     }
     this.playStream(userID);
   };
+  /// Send a room message broadcast to others
+  ZegoExpressManager.prototype.sendBroadcastMessage = function (message) {
+    return zego_express_engine_reactnative_1.default
+      .instance()
+      .sendBroadcastMessage(this.roomID, message)
+      .then(function (result) {
+        if (result.errorCode === 0) {
+          console.warn(
+            '[ZEGOCLOUD LOG][Manager][sendBroadcastMessage] - Send success',
+          );
+        }
+        return result.errorCode === 0;
+      });
+  };
   /// Leave the room when you are done the talk or if you want to join another room
   ZegoExpressManager.prototype.leaveRoom = function () {
     console.warn(
@@ -477,6 +493,15 @@ var ZegoExpressManager = /** @class */ (function () {
       this.roomStateUpdateCallback.push(fun);
     } else {
       this.roomStateUpdateCallback.length = 0;
+    }
+  };
+  /// Trigger when a room broadcast message is received
+  ZegoExpressManager.prototype.onBroadcastMessageRecv = function (fun) {
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.broadcastMessageRecvCallback.push(fun);
+    } else {
+      this.broadcastMessageRecvCallback.length = 0;
     }
   };
   ZegoExpressManager.prototype.generateStreamID = function (userID, roomID) {
@@ -666,6 +691,21 @@ var ZegoExpressManager = /** @class */ (function () {
           fun(roomID, remainTimeInSecond);
         });
       });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('IMRecvBroadcastMessage', function (roomID, chatData) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][IMRecvBroadcastMessage]',
+          roomID,
+          chatData,
+        );
+        var msgList = chatData.map(function (item) {
+          return {fromUser: item.fromUser, message: item.message};
+        });
+        _this.broadcastMessageRecvCallback.forEach(function (fun) {
+          fun(msgList);
+        });
+      });
   };
   ZegoExpressManager.prototype.offOtherEvent = function () {
     zego_express_engine_reactnative_1.default.instance().off('roomUserUpdate');
@@ -688,6 +728,9 @@ var ZegoExpressManager = /** @class */ (function () {
     zego_express_engine_reactnative_1.default
       .instance()
       .off('roomTokenWillExpire');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('IMRecvBroadcastMessage');
   };
   ZegoExpressManager.prototype.playStream = function (userID) {
     if (
