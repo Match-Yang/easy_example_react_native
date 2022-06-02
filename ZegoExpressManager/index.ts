@@ -12,6 +12,8 @@ import ZegoExpressEngine, {
   ZegoRoomState,
   ZegoRoomExtraInfo,
   ZegoRoomSetRoomExtraInfoResult,
+  ZegoIMSendBroadcastMessageResult,
+  ZegoBroadcastMessageInfo,
 } from 'zego-express-engine-reactnative';
 
 import {
@@ -200,7 +202,7 @@ export class ZegoExpressManager {
       );
       return;
     }
-    const { streamID, userID } = this.localParticipant;
+    const {streamID, userID} = this.localParticipant;
     this.localParticipant.renderView = renderView;
     this.participantDic.set(userID, this.localParticipant);
     this.streamDic.set(streamID, this.localParticipant);
@@ -249,6 +251,19 @@ export class ZegoExpressManager {
         return result.errorCode === 0;
       });
   }
+  /// Send a room message broadcast to others
+  sendBroadcastMessage(message: string): Promise<boolean> {
+    return ZegoExpressEngine.instance()
+      .sendBroadcastMessage(this.roomID, message)
+      .then((result: ZegoIMSendBroadcastMessageResult) => {
+        if (result.errorCode === 0) {
+          console.warn(
+            '[ZEGOCLOUD LOG][Manager][sendBroadcastMessage] - Send success',
+          );
+        }
+        return result.errorCode === 0;
+      });
+  }
   /// Leave the room when you are done the talk or if you want to join another room
   leaveRoom(): Promise<void> {
     console.warn(
@@ -281,9 +296,11 @@ export class ZegoExpressManager {
   }
   /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
   renewToken(roomID: string, token: string): Promise<void> {
-    return ZegoExpressEngine.instance().renewToken(roomID, token).then(() => {
-      console.warn('ZEGO RN LOG - renewToken success');
-    });
+    return ZegoExpressEngine.instance()
+      .renewToken(roomID, token)
+      .then(() => {
+        console.warn('ZEGO RN LOG - renewToken success');
+      });
   }
   /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   onRoomUserUpdate(
@@ -352,6 +369,25 @@ export class ZegoExpressManager {
           state,
         );
         fun(state);
+      },
+    );
+  }
+  /// Triggered when a room broadcast message is received
+  onBroadcastMessageRecv(
+    fun: (msgList: {fromUser: ZegoUser; message: string}[]) => void,
+  ) {
+    ZegoExpressEngine.instance().on(
+      'IMRecvBroadcastMessage',
+      (roomID: string, chatData: ZegoBroadcastMessageInfo[]) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onBroadcastMessageRecv]',
+          roomID,
+          chatData,
+        );
+        const msgList = chatData.map(item => {
+          return {fromUser: item.fromUser, message: item.message};
+        });
+        fun(msgList);
       },
     );
   }
@@ -563,7 +599,7 @@ export class ZegoExpressManager {
     }
   }
   private triggerStreamHandle(type: 'camera' | 'mic', enable: boolean) {
-    const { streamID, camera, mic } = this.localParticipant;
+    const {streamID, camera, mic} = this.localParticipant;
     if (enable) {
       if (!this.isPublish) {
         console.warn(
