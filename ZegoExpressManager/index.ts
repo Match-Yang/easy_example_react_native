@@ -10,6 +10,8 @@ import ZegoExpressEngine, {
   ZegoPlayStreamQuality,
   ZegoStream,
   ZegoRoomState,
+  ZegoIMSendBroadcastMessageResult,
+  ZegoBroadcastMessageInfo,
 } from 'zego-express-engine-reactnative';
 
 import {
@@ -47,6 +49,9 @@ export class ZegoExpressManager {
     updateType: ZegoUpdateType,
     userList: string[],
     roomID: string,
+  ) => void)[] = [];
+  private broadcastMessageRecvCallback: ((
+    msgList: {fromUser: ZegoUser; message: string}[],
   ) => void)[] = [];
   private onOtherEventSwitch = false;
   static shared: ZegoExpressManager;
@@ -91,6 +96,7 @@ export class ZegoExpressManager {
       ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
       ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
       ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+      ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
       // @ts-ignore
       ZegoExpressManager.shared = null;
     });
@@ -241,6 +247,19 @@ export class ZegoExpressManager {
     }
     this.playStream(userID);
   }
+  /// Send a room message broadcast to others
+  sendBroadcastMessage(message: string): Promise<boolean> {
+    return ZegoExpressEngine.instance()
+      .sendBroadcastMessage(this.roomID, message)
+      .then((result: ZegoIMSendBroadcastMessageResult) => {
+        if (result.errorCode === 0) {
+          console.warn(
+            '[ZEGOCLOUD LOG][Manager][sendBroadcastMessage] - Send success',
+          );
+        }
+        return result.errorCode === 0;
+      });
+  }
   /// Leave the room when you are done the talk or if you want to join another room
   leaveRoom(): Promise<void> {
     console.warn(
@@ -327,6 +346,17 @@ export class ZegoExpressManager {
       this.roomStateUpdateCallback.push(fun);
     } else {
       this.roomStateUpdateCallback.length = 0;
+    }
+  }
+  /// Trigger when a room broadcast message is received
+  onBroadcastMessageRecv(
+    fun?: (msgList: {fromUser: ZegoUser; message: string}[]) => void,
+  ) {
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.broadcastMessageRecvCallback.push(fun);
+    } else {
+      this.broadcastMessageRecvCallback.length = 0;
     }
   }
   private generateStreamID(userID: string, roomID: string): string {
@@ -526,6 +556,22 @@ export class ZegoExpressManager {
         });
       },
     );
+    ZegoExpressEngine.instance().on(
+      'IMRecvBroadcastMessage',
+      (roomID: string, chatData: ZegoBroadcastMessageInfo[]) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][IMRecvBroadcastMessage]',
+          roomID,
+          chatData,
+        );
+        const msgList = chatData.map(item => {
+          return {fromUser: item.fromUser, message: item.message};
+        });
+        this.broadcastMessageRecvCallback.forEach(fun => {
+          fun(msgList);
+        });
+      },
+    );
   }
   private offOtherEvent() {
     ZegoExpressEngine.instance().off('roomUserUpdate');
@@ -536,6 +582,7 @@ export class ZegoExpressManager {
     ZegoExpressEngine.instance().off('remoteMicStateUpdate');
     ZegoExpressEngine.instance().off('roomStateUpdate');
     ZegoExpressEngine.instance().off('roomTokenWillExpire');
+    ZegoExpressEngine.instance().off('IMRecvBroadcastMessage');
   }
   private playStream(userID: string) {
     if (
