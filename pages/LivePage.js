@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import {
   PermissionsAndroid,
   Platform,
@@ -8,15 +8,15 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import { Actions } from 'react-native-router-flux';
+import {Actions} from 'react-native-router-flux';
 
 import ZegoExpressEngine, {
   ZegoTextureView,
   ZegoScenario,
   ZegoUpdateType,
 } from 'zego-express-engine-reactnative';
-import { ZegoExpressManager } from '../ZegoExpressManager';
-import { ZegoMediaOptions } from '../ZegoExpressManager/index.entity';
+import {ZegoExpressManager} from '../ZegoExpressManager';
+import {ZegoMediaOptions} from '../ZegoExpressManager/index.entity';
 
 const styles = StyleSheet.create({
   // ZegoEasyExample
@@ -264,17 +264,17 @@ export default class LivePage extends Component {
   joinRoom() {
     const options = this.data.isHost
       ? [
-        ZegoMediaOptions.PublishLocalAudio,
-        ZegoMediaOptions.PublishLocalVideo,
-        ZegoMediaOptions.AutoPlayAudio,
-        ZegoMediaOptions.AutoPlayVideo,
-      ]
+          ZegoMediaOptions.PublishLocalAudio,
+          ZegoMediaOptions.PublishLocalVideo,
+          ZegoMediaOptions.AutoPlayAudio,
+          ZegoMediaOptions.AutoPlayVideo,
+        ]
       : [ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.AutoPlayVideo];
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
         this.token,
-        { userID: this.userID, userName: this.userName },
+        {userID: this.userID, userName: this.userName},
         options,
       )
       .then(result => {
@@ -365,7 +365,7 @@ export default class LivePage extends Component {
   }
   showHostView(show, type, userID) {
     if (show) {
-      this.setState({ hideHostView: false });
+      this.setState({hideHostView: false});
       const renderView = findNodeHandle(this.hostViewRef.current);
       if (type === 'remote') {
         ZegoExpressManager.instance().setRemoteVideoView(userID, renderView);
@@ -373,12 +373,12 @@ export default class LivePage extends Component {
         ZegoExpressManager.instance().setLocalVideoView(renderView);
       }
     } else {
-      this.setState({ hideHostView: true });
+      this.setState({hideHostView: true});
     }
   }
   showCoHostView(show, type, userID) {
     if (show) {
-      this.setState({ hideCoHostView: false });
+      this.setState({hideCoHostView: false});
       const renderView = findNodeHandle(this.coHostViewRef.current);
       if (type === 'remote') {
         ZegoExpressManager.instance().setRemoteVideoView(userID, renderView);
@@ -386,17 +386,17 @@ export default class LivePage extends Component {
         ZegoExpressManager.instance().setLocalVideoView(renderView);
       }
     } else {
-      this.setState({ hideCoHostView: true });
+      this.setState({hideCoHostView: true});
     }
   }
   setCoHostIconVisible(visible) {
-    this.setState({ coHostIconVisible: visible });
+    this.setState({coHostIconVisible: visible});
   }
   setCameraIconVisible(visible) {
-    this.setState({ cameraIconVisible: visible });
+    this.setState({cameraIconVisible: visible});
   }
   setMicIconVisible(visible) {
-    this.setState({ micIconVisible: visible });
+    this.setState({micIconVisible: visible});
   }
   render() {
     return (
