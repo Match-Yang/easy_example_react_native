@@ -112,6 +112,7 @@ export default class LivePage extends Component {
   userName;
   data = {
     cameraEnable: true,
+    useFront: true,
     micEnable: true,
     isHost: true,
     isCoHost: false,
@@ -303,6 +304,16 @@ export default class LivePage extends Component {
         this.data.cameraEnable = !this.data.cameraEnable;
       });
   }
+
+  // Switch camera front/back
+  useFrontCamera() {
+    ZegoExpressManager.instance()
+      .useFrontCamera(!this.data.useFront)
+      .then(() => {
+        this.data.useFront = !this.data.useFront;
+      });
+  }
+
   // Switch microphone on/off
   toggleMic() {
     ZegoExpressManager.instance()
@@ -438,6 +449,17 @@ export default class LivePage extends Component {
               this.state.cameraIconVisible ? styles.show : styles.hide,
             ]}
             onPress={this.toggleCamera.bind(this)}>
+            <Image
+              style={styles.image}
+              source={require('../img/icon_camera.png')}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.imageCon,
+              this.state.cameraIconVisible ? styles.show : styles.hide,
+            ]}
+            onPress={this.useFrontCamera.bind(this)}>
             <Image
               style={styles.image}
               source={require('../img/icon_camera.png')}
