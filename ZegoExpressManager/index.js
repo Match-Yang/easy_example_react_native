@@ -164,7 +164,13 @@ var ZegoExpressManager = /** @class */ (function () {
     this.roomID = '';
     this.mediaOptions = [];
     this.deviceUpdateCallback = [];
+    this.roomStateUpdateCallback = [];
+    this.roomTokenWillExpireCallback = [];
+    this.roomUserUpdateCallback = [];
+    this.broadcastMessageRecvCallback = [];
+    this.roomExtraInfoUpdateCallback = [];
     this.isPublish = false;
+    this.onOtherEventSwitch = false;
     if (!ZegoExpressManager.shared) {
       this.localParticipant = {};
       ZegoExpressManager.shared = this;
@@ -189,18 +195,31 @@ var ZegoExpressManager = /** @class */ (function () {
         console.warn(
           '[ZEGOCLOUD LOG][Manager][createEngineWithProfile] - Create success',
         );
-        ZegoExpressManager.shared.onOtherEvent();
+        if (!ZegoExpressManager.shared.onOtherEventSwitch) {
+          ZegoExpressManager.shared.onOtherEvent();
+          ZegoExpressManager.shared.onOtherEventSwitch = true;
+        }
         return engine;
       });
   };
   /// Destroy the SDK instance if you have no need to use ZEGOCLOUD's API anymore.
   ZegoExpressManager.destroyEngine = function () {
+    ZegoExpressManager.shared.offOtherEvent();
+    ZegoExpressManager.shared.onOtherEventSwitch = false;
     return zego_express_engine_reactnative_1.default
       .destroyEngine()
       .then(function () {
         console.warn(
           '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
         );
+        ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
+        ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+        ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
+        ZegoExpressManager.shared.roomExtraInfoUpdateCallback.length = 0;
+        // @ts-ignore
+        ZegoExpressManager.shared = null;
       });
   };
   /// User [user] joins into the room with id [roomID] with [options] and then can talk to others who are in the room
@@ -429,7 +448,6 @@ var ZegoExpressManager = /** @class */ (function () {
     this.roomID = '';
     // @ts-ignore
     this.localParticipant = {};
-    this.deviceUpdateCallback.length = 0;
     this.mediaOptions = [];
     this.isPublish = false;
     return zego_express_engine_reactnative_1.default
@@ -450,74 +468,57 @@ var ZegoExpressManager = /** @class */ (function () {
   };
   /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomUserUpdate', function (roomID, updateType, userList) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomUserUpdate]',
-          roomID,
-          updateType,
-          userList,
-        );
-        var userIDList = [];
-        userList.forEach(function (user) {
-          userIDList.push(user.userID);
-        });
-        fun(updateType, userIDList, roomID);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomUserUpdateCallback.push(fun);
+    } else {
+      this.roomUserUpdateCallback.length = 0;
+    }
   };
   /// Trigger when device's status of user with [userID] has been update
   ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
-    this.deviceUpdateCallback.push(fun);
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.deviceUpdateCallback.push(fun);
+    } else {
+      this.deviceUpdateCallback.length = 0;
+    }
   };
   /// Trigger when the access token will expire which mean you should call renewToken to set new token
   ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomTokenWillExpire', fun);
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomTokenWillExpireCallback.push(fun);
+    } else {
+      this.roomTokenWillExpireCallback.length = 0;
+    }
   };
   /// Trigger when room extra info has been updated by you or others
   ZegoExpressManager.prototype.onRoomExtraInfoUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomExtraInfoUpdate', function (roomID, roomExtraInfoList) {
-        // this.roomExtraInfo = roomExtraInfoList[0];
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomExtraInfoUpdate]',
-          roomID,
-          roomExtraInfoList,
-        );
-        fun(roomExtraInfoList);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomExtraInfoUpdateCallback.push(fun);
+    } else {
+      this.roomExtraInfoUpdateCallback.length = 0;
+    }
   };
   /// Trigger when room's state changed
   ZegoExpressManager.prototype.onRoomStateUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomStateUpdate', function (roomID, state) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomStateUpdate]',
-          roomID,
-          state,
-        );
-        fun(state);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomStateUpdateCallback.push(fun);
+    } else {
+      this.roomStateUpdateCallback.length = 0;
+    }
   };
   /// Triggered when a room broadcast message is received
   ZegoExpressManager.prototype.onBroadcastMessageRecv = function (fun) {
-    zego_express_engine_reactnative_1.default
-      .instance()
-      .on('IMRecvBroadcastMessage', function (roomID, chatData) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onBroadcastMessageRecv]',
-          roomID,
-          chatData,
-        );
-        var msgList = chatData.map(function (item) {
-          return {fromUser: item.fromUser, message: item.message};
-        });
-        fun(msgList);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.broadcastMessageRecvCallback.push(fun);
+    } else {
+      this.broadcastMessageRecvCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.generateStreamID = function (userID, roomID) {
     if (!userID) {
@@ -547,7 +548,9 @@ var ZegoExpressManager = /** @class */ (function () {
           updateType,
           userList,
         );
+        var userIDList = [];
         userList.forEach(function (user) {
+          userIDList.push(user.userID);
           if (
             updateType === zego_express_engine_reactnative_1.ZegoUpdateType.Add
           ) {
@@ -564,6 +567,9 @@ var ZegoExpressManager = /** @class */ (function () {
           } else {
             _this.participantDic.delete(user.userID);
           }
+        });
+        _this.roomUserUpdateCallback.forEach(function (fun) {
+          fun(updateType, userIDList, roomID);
         });
       });
     zego_express_engine_reactnative_1.default
@@ -685,7 +691,77 @@ var ZegoExpressManager = /** @class */ (function () {
           state,
           errorCode,
         );
+        _this.roomStateUpdateCallback.forEach(function (fun) {
+          fun(state);
+        });
       });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('roomTokenWillExpire', function (roomID, remainTimeInSecond) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]',
+          roomID,
+          remainTimeInSecond,
+        );
+        _this.roomTokenWillExpireCallback.forEach(function (fun) {
+          fun(roomID, remainTimeInSecond);
+        });
+      });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('roomExtraInfoUpdate', function (roomID, roomExtraInfoList) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onRoomExtraInfoUpdate]',
+          roomID,
+          roomExtraInfoList,
+        );
+        _this.roomExtraInfoUpdateCallback.forEach(function (fun) {
+          fun(roomExtraInfoList);
+        });
+      });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('IMRecvBroadcastMessage', function (roomID, chatData) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][IMRecvBroadcastMessage]',
+          roomID,
+          chatData,
+        );
+        var msgList = chatData.map(function (item) {
+          return {fromUser: item.fromUser, message: item.message};
+        });
+        _this.broadcastMessageRecvCallback.forEach(function (fun) {
+          fun(msgList);
+        });
+      });
+  };
+  ZegoExpressManager.prototype.offOtherEvent = function () {
+    zego_express_engine_reactnative_1.default.instance().off('roomUserUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomStreamUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('publisherQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('playerQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteCameraStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteMicStateUpdate');
+    zego_express_engine_reactnative_1.default.instance().off('roomStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomTokenWillExpire');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('IMRecvBroadcastMessage');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomExtraInfoUpdate');
   };
   ZegoExpressManager.prototype.playStream = function (userID) {
     if (

@@ -42,8 +42,24 @@ export class ZegoExpressManager {
     userID: string,
     roomID: string,
   ) => void)[] = [];
+  private roomStateUpdateCallback: ((state: ZegoRoomState) => void)[] = [];
+  private roomTokenWillExpireCallback: ((
+    roomID: string,
+    remainTimeInSecond: number,
+  ) => void)[] = [];
+  private roomUserUpdateCallback: ((
+    updateType: ZegoUpdateType,
+    userList: string[],
+    roomID: string,
+  ) => void)[] = [];
+  private broadcastMessageRecvCallback: ((
+    msgList: {fromUser: ZegoUser; message: string}[],
+  ) => void)[] = [];
+  private roomExtraInfoUpdateCallback: ((
+    roomExtraInfoList: ZegoRoomExtraInfo[],
+  ) => void)[] = [];
   private isPublish = false;
-  private roomExtraInfo!: ZegoRoomExtraInfo;
+  private onOtherEventSwitch = false;
   static shared: ZegoExpressManager;
   private constructor() {
     if (!ZegoExpressManager.shared) {
@@ -70,17 +86,30 @@ export class ZegoExpressManager {
         console.warn(
           '[ZEGOCLOUD LOG][Manager][createEngineWithProfile] - Create success',
         );
-        ZegoExpressManager.shared.onOtherEvent();
+        if (!ZegoExpressManager.shared.onOtherEventSwitch) {
+          ZegoExpressManager.shared.onOtherEvent();
+          ZegoExpressManager.shared.onOtherEventSwitch = true;
+        }
         return engine;
       },
     );
   }
   /// Destroy the SDK instance if you have no need to use ZEGOCLOUD's API anymore.
   static destroyEngine(): Promise<void> {
+    ZegoExpressManager.shared.offOtherEvent();
+    ZegoExpressManager.shared.onOtherEventSwitch = false;
     return ZegoExpressEngine.destroyEngine().then(() => {
       console.warn(
         '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
       );
+      ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
+      ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
+      ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
+      ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+      ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
+      ZegoExpressManager.shared.roomExtraInfoUpdateCallback.length = 0;
+      // @ts-ignore
+      ZegoExpressManager.shared = null;
     });
   }
   /// User [user] joins into the room with id [roomID] with [options] and then can talk to others who are in the room
@@ -285,7 +314,6 @@ export class ZegoExpressManager {
     this.roomID = '';
     // @ts-ignore
     this.localParticipant = {};
-    this.deviceUpdateCallback.length = 0;
     this.mediaOptions = [];
     this.isPublish = false;
     return ZegoExpressEngine.instance()
@@ -304,92 +332,75 @@ export class ZegoExpressManager {
   }
   /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   onRoomUserUpdate(
-    fun: (
+    fun?: (
       updateType: ZegoUpdateType,
       userList: string[],
       roomID: string,
     ) => void,
   ) {
-    return ZegoExpressEngine.instance().on(
-      'roomUserUpdate',
-      (roomID: string, updateType: ZegoUpdateType, userList: ZegoUser[]) => {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomUserUpdate]',
-          roomID,
-          updateType,
-          userList,
-        );
-        const userIDList: string[] = [];
-        userList.forEach((user: ZegoUser) => {
-          userIDList.push(user.userID);
-        });
-        fun(updateType, userIDList, roomID);
-      },
-    );
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomUserUpdateCallback.push(fun);
+    } else {
+      this.roomUserUpdateCallback.length = 0;
+    }
   }
   /// Trigger when device's status of user with [userID] has been update
   onRoomUserDeviceUpdate(
-    fun: (
+    fun?: (
       updateType: ZegoDeviceUpdateType,
       userID: string,
       roomID: string,
     ) => void,
   ) {
-    this.deviceUpdateCallback.push(fun);
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.deviceUpdateCallback.push(fun);
+    } else {
+      this.deviceUpdateCallback.length = 0;
+    }
   }
   /// Trigger when the access token will expire which mean you should call renewToken to set new token
   onRoomTokenWillExpire(
-    fun: (roomID: string, remainTimeInSecond: number) => void,
+    fun?: (roomID: string, remainTimeInSecond: number) => void,
   ) {
-    return ZegoExpressEngine.instance().on('roomTokenWillExpire', fun);
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomTokenWillExpireCallback.push(fun);
+    } else {
+      this.roomTokenWillExpireCallback.length = 0;
+    }
   }
   /// Trigger when room extra info has been updated by you or others
-  onRoomExtraInfoUpdate(fun: (roomExtraInfoList: ZegoRoomExtraInfo[]) => void) {
-    return ZegoExpressEngine.instance().on(
-      'roomExtraInfoUpdate',
-      (roomID: string, roomExtraInfoList: ZegoRoomExtraInfo[]) => {
-        // this.roomExtraInfo = roomExtraInfoList[0];
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomExtraInfoUpdate]',
-          roomID,
-          roomExtraInfoList,
-        );
-        fun(roomExtraInfoList);
-      },
-    );
+  onRoomExtraInfoUpdate(
+    fun?: (roomExtraInfoList: ZegoRoomExtraInfo[]) => void,
+  ) {
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomExtraInfoUpdateCallback.push(fun);
+    } else {
+      this.roomExtraInfoUpdateCallback.length = 0;
+    }
   }
   /// Trigger when room's state changed
-  onRoomStateUpdate(fun: (state: ZegoRoomState) => void) {
-    return ZegoExpressEngine.instance().on(
-      'roomStateUpdate',
-      (roomID: string, state: ZegoRoomState) => {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomStateUpdate]',
-          roomID,
-          state,
-        );
-        fun(state);
-      },
-    );
+  onRoomStateUpdate(fun?: (state: ZegoRoomState) => void) {
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomStateUpdateCallback.push(fun);
+    } else {
+      this.roomStateUpdateCallback.length = 0;
+    }
   }
   /// Triggered when a room broadcast message is received
   onBroadcastMessageRecv(
-    fun: (msgList: {fromUser: ZegoUser; message: string}[]) => void,
+    fun?: (msgList: {fromUser: ZegoUser; message: string}[]) => void,
   ) {
-    ZegoExpressEngine.instance().on(
-      'IMRecvBroadcastMessage',
-      (roomID: string, chatData: ZegoBroadcastMessageInfo[]) => {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onBroadcastMessageRecv]',
-          roomID,
-          chatData,
-        );
-        const msgList = chatData.map(item => {
-          return {fromUser: item.fromUser, message: item.message};
-        });
-        fun(msgList);
-      },
-    );
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.broadcastMessageRecvCallback.push(fun);
+    } else {
+      this.broadcastMessageRecvCallback.length = 0;
+    }
   }
   private generateStreamID(userID: string, roomID: string): string {
     if (!userID) {
@@ -419,7 +430,9 @@ export class ZegoExpressManager {
           updateType,
           userList,
         );
+        const userIDList: string[] = [];
         userList.forEach(user => {
+          userIDList.push(user.userID);
           if (updateType === ZegoUpdateType.Add) {
             const participant = this.participantDic.get(user.userID);
             if (participant) {
@@ -434,6 +447,9 @@ export class ZegoExpressManager {
           } else {
             this.participantDic.delete(user.userID);
           }
+        });
+        this.roomUserUpdateCallback.forEach(fun => {
+          fun(updateType, userIDList, roomID);
         });
       },
     );
@@ -565,8 +581,65 @@ export class ZegoExpressManager {
           state,
           errorCode,
         );
+        this.roomStateUpdateCallback.forEach(fun => {
+          fun(state);
+        });
       },
     );
+    ZegoExpressEngine.instance().on(
+      'roomTokenWillExpire',
+      (roomID: string, remainTimeInSecond: number) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]',
+          roomID,
+          remainTimeInSecond,
+        );
+        this.roomTokenWillExpireCallback.forEach(fun => {
+          fun(roomID, remainTimeInSecond);
+        });
+      },
+    );
+    ZegoExpressEngine.instance().on(
+      'roomExtraInfoUpdate',
+      (roomID: string, roomExtraInfoList: ZegoRoomExtraInfo[]) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][onRoomExtraInfoUpdate]',
+          roomID,
+          roomExtraInfoList,
+        );
+        this.roomExtraInfoUpdateCallback.forEach(fun => {
+          fun(roomExtraInfoList);
+        });
+      },
+    );
+    ZegoExpressEngine.instance().on(
+      'IMRecvBroadcastMessage',
+      (roomID: string, chatData: ZegoBroadcastMessageInfo[]) => {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][IMRecvBroadcastMessage]',
+          roomID,
+          chatData,
+        );
+        const msgList = chatData.map(item => {
+          return {fromUser: item.fromUser, message: item.message};
+        });
+        this.broadcastMessageRecvCallback.forEach(fun => {
+          fun(msgList);
+        });
+      },
+    );
+  }
+  private offOtherEvent() {
+    ZegoExpressEngine.instance().off('roomUserUpdate');
+    ZegoExpressEngine.instance().off('roomStreamUpdate');
+    ZegoExpressEngine.instance().off('publisherQualityUpdate');
+    ZegoExpressEngine.instance().off('playerQualityUpdate');
+    ZegoExpressEngine.instance().off('remoteCameraStateUpdate');
+    ZegoExpressEngine.instance().off('remoteMicStateUpdate');
+    ZegoExpressEngine.instance().off('roomStateUpdate');
+    ZegoExpressEngine.instance().off('roomTokenWillExpire');
+    ZegoExpressEngine.instance().off('IMRecvBroadcastMessage');
+    ZegoExpressEngine.instance().off('roomExtraInfoUpdate');
   }
   private playStream(userID: string) {
     if (
