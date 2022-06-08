@@ -158,6 +158,10 @@ var ZegoExpressManager = /** @class */ (function () {
     this.roomID = '';
     this.mediaOptions = [];
     this.deviceUpdateCallback = [];
+    this.roomStateUpdateCallback = [];
+    this.roomTokenWillExpireCallback = [];
+    this.roomUserUpdateCallback = [];
+    this.onOtherEventSwitch = false;
     this.maxMemberCount = 2;
     this.previewViewMode =
       zego_express_engine_reactnative_1.ZegoViewMode.AspectFit;
@@ -182,17 +186,28 @@ var ZegoExpressManager = /** @class */ (function () {
         console.warn(
           '[ZEGOCLOUD LOG][Manager][createEngine] - Create engine with profile success',
         );
-        ZegoExpressManager.shared.onOtherEvent();
+        if (!ZegoExpressManager.shared.onOtherEventSwitch) {
+          ZegoExpressManager.shared.onOtherEvent();
+          ZegoExpressManager.shared.onOtherEventSwitch = true;
+        }
         return engine;
       });
   };
   ZegoExpressManager.destroyEngine = function () {
+    ZegoExpressManager.shared.offOtherEvent();
+    ZegoExpressManager.shared.onOtherEventSwitch = false;
     return zego_express_engine_reactnative_1.default
       .destroyEngine()
       .then(function () {
         console.warn(
           '[ZEGOCLOUD LOG][Manager][destroyEngine] - Destroy engine success',
         );
+        ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
+        ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
+        ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
+        // @ts-ignore
+        ZegoExpressManager.shared = null;
       });
   };
   ZegoExpressManager.prototype.joinRoom = function (
@@ -554,7 +569,6 @@ var ZegoExpressManager = /** @class */ (function () {
             this.roomID = '';
             // @ts-ignore
             this.localParticipant = {};
-            this.deviceUpdateCallback.length = 0;
             this.mediaOptions = [];
             return [
               2 /*return*/,
@@ -573,48 +587,36 @@ var ZegoExpressManager = /** @class */ (function () {
     });
   };
   ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomUserUpdate', function (roomID, updateType, userList) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomUserUpdate]',
-          roomID,
-          updateType,
-          userList,
-        );
-        var userIDList = [];
-        userList.forEach(function (user) {
-          userIDList.push(user.userID);
-        });
-        fun(updateType, userIDList, roomID);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomUserUpdateCallback.push(fun);
+    } else {
+      this.roomUserUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.onRoomUserDeviceUpdate = function (fun) {
-    this.deviceUpdateCallback.push(fun);
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.deviceUpdateCallback.push(fun);
+    } else {
+      this.deviceUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomTokenWillExpire', function (roomID, remainTimeInSecond) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomTokenWillExpire]',
-          roomID,
-          remainTimeInSecond,
-        );
-        fun(roomID, remainTimeInSecond);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomTokenWillExpireCallback.push(fun);
+    } else {
+      this.roomTokenWillExpireCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.onRoomStateUpdate = function (fun) {
-    return zego_express_engine_reactnative_1.default
-      .instance()
-      .on('roomStateUpdate', function (roomID, state) {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][onRoomStateUpdate]',
-          roomID,
-          state,
-        );
-        fun(state);
-      });
+    // If the parameter is null, the previously registered callback is cleared
+    if (fun) {
+      this.roomStateUpdateCallback.push(fun);
+    } else {
+      this.roomStateUpdateCallback.length = 0;
+    }
   };
   ZegoExpressManager.prototype.generateStreamID = function (
     userID,
@@ -657,7 +659,9 @@ var ZegoExpressManager = /** @class */ (function () {
           updateType,
           userList,
         );
+        var userIDList = [];
         userList.forEach(function (user) {
+          userIDList.push(user.userID);
           var participant = _this.participantDic.get(user.userID);
           if (
             updateType === zego_express_engine_reactnative_1.ZegoUpdateType.Add
@@ -680,6 +684,9 @@ var ZegoExpressManager = /** @class */ (function () {
               _this.participantDic.delete(user.userID);
             }
           }
+        });
+        _this.roomUserUpdateCallback.forEach(function (fun) {
+          fun(updateType, userIDList, roomID);
         });
         console.warn(
           '[ZEGOCLOUD LOG][Manager][participantDic]',
@@ -823,6 +830,53 @@ var ZegoExpressManager = /** @class */ (function () {
         );
         console.warn('[ZEGOCLOUD LOG][Manager][streamDic]', _this.streamDic);
       });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('roomStateUpdate', function (roomID, state, errorCode) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][roomStateUpdate]',
+          roomID,
+          state,
+          errorCode,
+        );
+        _this.roomStateUpdateCallback.forEach(function (fun) {
+          fun(state);
+        });
+      });
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .on('roomTokenWillExpire', function (roomID, remainTimeInSecond) {
+        console.warn(
+          '[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]',
+          roomID,
+          remainTimeInSecond,
+        );
+        _this.roomTokenWillExpireCallback.forEach(function (fun) {
+          fun(roomID, remainTimeInSecond);
+        });
+      });
+  };
+  ZegoExpressManager.prototype.offOtherEvent = function () {
+    zego_express_engine_reactnative_1.default.instance().off('roomUserUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomStreamUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('publisherQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('playerQualityUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteCameraStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('remoteMicStateUpdate');
+    zego_express_engine_reactnative_1.default.instance().off('roomStateUpdate');
+    zego_express_engine_reactnative_1.default
+      .instance()
+      .off('roomTokenWillExpire');
   };
   ZegoExpressManager.prototype.playStream = function (userID, streamChannel) {
     if (streamChannel === void 0) {

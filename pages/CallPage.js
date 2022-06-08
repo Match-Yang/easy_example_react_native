@@ -160,6 +160,8 @@ export default class CallPage extends Component {
       console.warn(
         '[ZEGOCLOUD LOG][CallPage][componentDidMount] - ZegoExpressEngine created',
       );
+      // Clear previously registered callbacks
+      this.unRegisterCallback();
       // Register callback
       this.registerCallback();
 
@@ -167,12 +169,8 @@ export default class CallPage extends Component {
       this.joinRoom();
     });
   }
-  async componentWillUnmount() {
-    await ZegoExpressManager.instance().leaveRoom();
-    await ZegoExpressManager.destroyEngine();
-    console.warn(
-      '[ZEGOCLOUD LOG][CallPage][componentWillUnmount] - Destroy engine success',
-    );
+  componentWillUnmount() {
+    this.leaveRoom();
   }
 
   registerCallback() {
@@ -216,6 +214,12 @@ export default class CallPage extends Component {
         ZegoExpressEngine.instance().renewToken(roomID, token);
       },
     );
+  }
+  unRegisterCallback() {
+    // If the parameter is null, the previously registered callback is cleared
+    ZegoExpressManager.instance().onRoomUserUpdate();
+    ZegoExpressManager.instance().onRoomUserDeviceUpdate();
+    ZegoExpressManager.instance().onRoomTokenWillExpire();
   }
   registerVideoResourceCallback() {
     ZegoExpressManager.instance().onMediaPlayerPlayingProgress(millisecond => {
@@ -390,10 +394,16 @@ export default class CallPage extends Component {
   }
 
   // Leave room
-  async leaveRoom() {
-    await ZegoExpressManager.instance().leaveRoom();
-    // Back to home page
-    Actions.home();
+  leaveRoom() {
+    ZegoExpressManager.instance()
+      .leaveRoom()
+      .then(() => {
+        console.warn('[ZEGOCLOUD LOG][CallPage][leaveRoom] - Success');
+        console.warn('[ZEGOCLOUD LOG][CallPage][destroyEngine] - Success');
+        ZegoExpressManager.destroyEngine();
+        // Back to home page
+        Actions.home();
+      });
   }
 
   render() {
