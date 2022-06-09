@@ -30,22 +30,23 @@ const styles = StyleSheet.create({
     marginBottom: 100,
   },
   joinRoomBtn: {
-    width: '30%',
+    width: '50%',
     textAlign: 'center',
     marginLeft: 'auto',
     marginRight: 'auto',
+    marginTop: 30,
   },
 });
 
 const now = new Date().getTime();
 const config = {
   // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
-  appID: 0,
+  appID: ,
   // Heroku server url for example
   // Heroku server url for example
   // Get the server from: https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs
   // e.g. https://xxx.herokuapp.com
-  tokerServerUrl: '',
+  tokerServerUrl: ,
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: '123456',
@@ -59,6 +60,16 @@ export default class Home extends Component {
   async startCall() {
     var tokenObj = await this.generateToken();
     Actions.call({
+      appID: config.appID,
+      token: tokenObj.token,
+      roomID: config.roomID,
+      userID: config.userID,
+      userName: config.userName,
+    });
+  }
+  async startAudioGroupCall() {
+    var tokenObj = await this.generateToken();
+    Actions.audio_group_call({
       appID: config.appID,
       token: tokenObj.token,
       roomID: config.roomID,
@@ -80,7 +91,10 @@ export default class Home extends Component {
       <View style={[styles.homePage, styles.showPage]}>
         <Text style={styles.logo}>ZEGOCLOUD</Text>
         <View style={styles.joinRoomBtn}>
-          <Button onPress={this.startCall.bind(this)} title="joinRoom" />
+          <Button onPress={this.startCall.bind(this)} style={{marginBottom: 10, }} title="Start Call" />
+        </View>
+        <View style={styles.joinRoomBtn}>
+          <Button onPress={this.startAudioGroupCall.bind(this)} title="Start Audio Group Call" />
         </View>
       </View>
     );
