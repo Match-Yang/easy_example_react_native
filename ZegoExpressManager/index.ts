@@ -195,7 +195,7 @@ export class ZegoExpressManager {
       return;
     }
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error('ZEGO RN LOG - setLocalVideoView: You need to pass in the correct element');
       return;
     }
     const zegoView = new ZegoView(renderView, ZegoViewMode.AspectFit, 0);
@@ -208,7 +208,7 @@ export class ZegoExpressManager {
   /// Set the tag value of ref control which can obtain by findNodeHandle method to render video of user with id [userID]
   setRemoteVideoView(userID: string, renderView: number) {
     if (renderView === null) {
-      console.error('ZEGO RN LOG - You need to pass in the correct element');
+      console.error('ZEGO RN LOG - setRemoteVideoView: You need to pass in the correct element');
       return;
     }
     if (!userID) {

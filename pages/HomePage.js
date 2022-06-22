@@ -14,7 +14,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Actions } from 'react-native-router-flux'
 
 const styles = StyleSheet.create({
   // ZegoEasyExample
@@ -56,7 +55,7 @@ const styles = StyleSheet.create({
   }
 });
 
-export default class Home extends Component {
+export default class HomePage extends Component {
   currentUserID;
   currentUserName;
   currentUserIcon = "https://img.icons8.com/color/48/000000/avatar.png"; // TODO for test only
@@ -68,10 +67,14 @@ export default class Home extends Component {
   constructor(props) {
     super(props);
     console.log('Home constructor: ', props)
-    this.appData = props.appData;
+    this.appData = props.route.params.appData;
     this.currentUserID = this.appData.userID;
     this.currentUserName = this.currentUserID.toUpperCase(); // TODO user name for test only
     this.serverUrl = this.appData.serverUrl;
+    // Construct with room id is call by incoming call
+    if (props.route.params.roomID) {
+      this.handleIncomingCall(props.route.params.roomID);
+    }
   }
   // Call by Routes's instance which would be trigger in the APP component by user click the notification
   handleIncomingCall(roomID)
@@ -99,7 +102,7 @@ export default class Home extends Component {
     console.log('Send call invite reps: ', reps);
   }
   jumpToCallPage(roomID) {
-    Actions.call({ appData: this.appData, roomID: roomID, userName: this.currentUserName })
+    this.props.navigation.navigate('CallPage', { appData: this.appData, roomID: 'roomID', userName: this.currentUserName });
   }
   // Start call by click the call button
   startCall() {

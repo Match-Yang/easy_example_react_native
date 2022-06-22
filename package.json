@@ -13,6 +13,8 @@
     "@notifee/react-native": "^5.2.1",
     "@react-native-firebase/app": "^14.9.2",
     "@react-native-firebase/messaging": "^14.9.2",
+    "@react-navigation/native": "^6.0.10",
+    "@react-navigation/native-stack": "^6.6.2",
     "notifee": "^0.0.1",
     "react": "17.0.2",
     "react-native": "0.68.1",

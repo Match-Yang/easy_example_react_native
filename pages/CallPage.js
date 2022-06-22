@@ -122,15 +122,16 @@ export default class CallPage extends Component {
     appData; // pass back to home page
     constructor(props) {
         super(props)
-        console.log('Call page: ', props)
+        console.log('Call page: ', props.route)
+        this.appData = props.route.params.appData;
         this.localViewRef = React.createRef();
         this.remoteViewRef = React.createRef();
-        this.appID = parseInt(props.appData.appID);
-        this.token = props.appData.zegoToken;
-        this.roomID = props.roomID;
-        this.userID = props.appData.userID;
-        this.userName = props.userName;
-        this.appData = props.appData;
+        this.appID = parseInt(this.appData.appID);
+        this.token = this.appData.zegoToken;
+        this.roomID = props.route.params.roomID;
+        this.userID = this.appData.userID;
+        this.userName = props.route.params.userName;
+        
 
     }
     state = {
@@ -244,6 +245,7 @@ export default class CallPage extends Component {
     // Join in ZEGOCLOUD's room and wait for other.
     // While user on the same room, they can talk to each other
     async joinRoom() {
+        console.log("Join room: ", this.roomID, this.token)
         ZegoExpressManager.instance().joinRoom(this.roomID, this.token, { userID: this.userID, userName: this.userName },
             [ZegoMediaOptions.PublishLocalAudio, ZegoMediaOptions.PublishLocalVideo, ZegoMediaOptions.AutoPlayAudio, ZegoMediaOptions.AutoPlayVideo]).then(result => {
                 if (result) {
@@ -267,7 +269,7 @@ export default class CallPage extends Component {
             .then(() => {
                 console.warn('Leave successful');
                 // Back to home page
-                Actions.home({appData: this.appData});
+                this.props.navigation.navigate('HomePage', {appData: this.appData});
             });
     };
 

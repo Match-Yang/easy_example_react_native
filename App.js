@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import Routes from './pages/Routes.js';
+import {AppNavigation, navigationRef, pushToScreen} from './pages/AppNavigation.js'
+import { NavigationContainer } from '@react-navigation/native';
 import messaging from '@react-native-firebase/messaging';
 import { Platform, Alert } from 'react-native'
 import notifee, { AuthorizationStatus, EventType, AndroidImportance, AndroidVisibility } from '@notifee/react-native';
@@ -94,8 +95,10 @@ messaging().setBackgroundMessageHandler(onBackgroundMessageReceived);
 
 ///\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ Code for APP been killed /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
+
 class App extends Component {
    routesInstance;
+   navigationRef;
    messageListener;
 
    state = {
@@ -112,6 +115,10 @@ class App extends Component {
       this.messageListener;
    }
 
+   handleIncomingCall(roomID) {
+      console.log('Navigate to home with incoming call..........');
+      pushToScreen('HomePage', { 'roomID': roomID })
+   }
    async onAppBootstrap() {
       await this.checkPermission();
 
@@ -121,7 +128,7 @@ class App extends Component {
 
       // If this variable comes with a non-empty value, means the APP launched by FCM notification. Then jump to incoming call logic
       if (killedIncomingCallRoomId != '') {
-         this.routesInstance.handleIncomingCall(killedIncomingCallRoomId);
+         this.handleIncomingCall(killedIncomingCallRoomId);
       }
    }
 
@@ -136,10 +143,7 @@ class App extends Component {
          } else if (type == EventType.ACTION_PRESS && detail.pressAction.id) {
             if (detail.pressAction.id == 'accept') {
                console.log('Accept the call...', detail.notification.data.roomID)
-               // Jump to the home page by routesInstance
-               if (this.routesInstance != undefined) {
-                  this.routesInstance.handleIncomingCall(detail.notification.data.roomID);
-               }
+               this.handleIncomingCall(detail.notification.data.roomID);
             }
             await notifee.cancelAllNotifications();
          }
@@ -154,10 +158,7 @@ class App extends Component {
          } else if (type == EventType.ACTION_PRESS && detail.pressAction.id) {
             if (detail.pressAction.id == 'accept') {
                console.log('Accept the call...', detail.notification.data.roomID)
-               // Jump to the home page by routesInstance
-               if (this.routesInstance != undefined) {
-                  this.routesInstance.handleIncomingCall(detail.notification.data.roomID);
-               }
+               this.handleIncomingCall(detail.notification.data.roomID);
             }
             await notifee.cancelAllNotifications();
          }
@@ -391,7 +392,9 @@ class App extends Component {
             zegoToken: this.state.zegoToken,
          }
          return (
-            <Routes appData={appData} ref={instance => { this.routesInstance = instance; }} />
+            <NavigationContainer ref={navigationRef}>
+               <AppNavigation appData={appData} />
+            </NavigationContainer>
          )
       } else {
          return (null)
