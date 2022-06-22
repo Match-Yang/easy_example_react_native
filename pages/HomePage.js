@@ -102,7 +102,7 @@ export default class HomePage extends Component {
     console.log('Send call invite reps: ', reps);
   }
   jumpToCallPage(roomID) {
-    this.props.navigation.navigate('CallPage', { appData: this.appData, roomID: 'roomID', userName: this.currentUserName });
+    this.props.navigation.navigate('CallPage', { appData: this.appData, roomID: roomID, userName: this.currentUserName });
   }
   // Start call by click the call button
   startCall() {
