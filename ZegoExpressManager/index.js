@@ -169,7 +169,13 @@ var ZegoExpressManager = /** @class */ (function () {
         return zego_express_engine_reactnative_1["default"].instance()
             .muteMicrophone(!enable)
             .then(function () {
-            console.warn('[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success', !enable);
+            console.warn('[ZEGOCLOUD LOG][Manager][enableMic] - Enable success', enable);
+        });
+    };
+    ZegoExpressManager.prototype.enableSpeaker = function (enable) {
+        this.localParticipant.speaker = enable;
+        return zego_express_engine_reactnative_1["default"].instance().muteSpeaker(!enable).then(function () {
+            console.warn('[ZEGOCLOUD LOG][Manager][enableSpeaker] - Enable success', enable);
         });
     };
     /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video
@@ -345,7 +351,7 @@ var ZegoExpressManager = /** @class */ (function () {
             });
         });
         zego_express_engine_reactnative_1["default"].instance().on('roomStreamUpdate', function (roomID, updateType, streamList) {
-            console.warn('[ZEGOCLOUD LOG][Manager][roomStreamUpdate>>>]', roomID, updateType, streamList);
+            console.warn('[ZEGOCLOUD LOG][Manager][roomStreamUpdate]', roomID, updateType, streamList);
             streamList.forEach(function (stream) {
                 var participant = _this.participantDic.get(stream.user.userID);
                 if (updateType === zego_express_engine_reactnative_1.ZegoUpdateType.Add) {

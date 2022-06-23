@@ -195,10 +195,17 @@ export class ZegoExpressManager {
       .muteMicrophone(!enable)
       .then(() => {
         console.warn(
-          '[ZEGOCLOUD LOG][Manager][muteMicrophone] - Mute success',
-          !enable,
+          '[ZEGOCLOUD LOG][Manager][enableMic] - Enable success',
+          enable,
         );
       });
+  }
+  enableSpeaker(enable: boolean): Promise<void> {
+    this.localParticipant.speaker = enable;
+    return ZegoExpressEngine.instance().muteSpeaker(!enable).then(() => {
+      console.warn('[ZEGOCLOUD LOG][Manager][enableSpeaker] - Enable success',
+      enable,);
+    });
   }
   /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video
   setLocalVideoView(renderView: number) {
