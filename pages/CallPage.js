@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   Button,
   TextInput,
@@ -11,15 +11,15 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
+import { Actions } from 'react-native-router-flux';
 
 import ZegoExpressEngine, {
   ZegoTextureView,
   ZegoScenario,
   ZegoUpdateType,
 } from 'zego-express-engine-reactnative';
-import {ZegoExpressManager} from '../ZegoExpressManager';
-import {ZegoMediaOptions} from '../ZegoExpressManager/index.entity';
+import { ZegoExpressManager } from '../ZegoExpressManager';
+import { ZegoMediaOptions } from '../ZegoExpressManager/index.entity';
 
 const styles = StyleSheet.create({
   // ZegoEasyExample
@@ -42,17 +42,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  previewView: {
+  remoteView: {
     width: '100%',
     height: '100%',
-  },
-  play: {
-    height: '25%',
-    width: '40%',
-    position: 'absolute',
-    top: 80,
-    right: 20,
-    zIndex: 2,
   },
   playView: {
     width: '100%',
@@ -82,7 +74,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 40,
-    // backgroundColor: 'gainsboro',
+    backgroundColor: 'gainsboro',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -93,7 +85,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 40,
-    // backgroundColor: 'gainsboro',
+    backgroundColor: 'gainsboro',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -101,30 +93,33 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: '50%',
+    height: '50%',
   },
   phoneImage: {
     width: 35,
     height: 35,
   },
+  remoteName: {
+    height: '25%',
+    width: '100%',
+    zIndex: 2,
+    textAlign: 'center',
+  }
 });
 
 /// CallPage use for display the Caller Video view and the Callee Video view
 ///
 /// TODO You can copy the completed class to your project
 export default class CallPage extends Component {
-  localViewRef;
-  remoteViewRef;
   appID;
   token;
   roomID;
   userID;
   userName;
+  remoteUserName;
   constructor(props) {
     super(props);
-    this.localViewRef = React.createRef();
-    this.remoteViewRef = React.createRef();
     this.appID = parseInt(props.appID);
     this.token = props.token;
     this.roomID = props.roomID;
@@ -134,6 +129,7 @@ export default class CallPage extends Component {
   state = {
     cameraEnable: true,
     micEnable: true,
+    speakerEnable: true,
   };
 
   componentDidMount() {
@@ -166,10 +162,9 @@ export default class CallPage extends Component {
         console.warn('out roomUserUpdate', updateType, userList, roomID);
         if (updateType == ZegoUpdateType.Add) {
           userList.forEach(userID => {
-            ZegoExpressManager.instance().setRemoteVideoView(
-              userID,
-              findNodeHandle(this.remoteViewRef.current),
-            );
+            this.setState({
+              remoteUserName: userID
+            })
           });
         }
       },
@@ -232,43 +227,46 @@ export default class CallPage extends Component {
     }
   }
   // Switch camera
-  enableCamera() {
+  toggleCamera() {
     ZegoExpressManager.instance()
-      .enableCamera(!this.cameraEnable)
+      .enableCamera(!this.state.cameraEnable)
       .then(() => {
-        this.cameraEnable = !this.cameraEnable;
         this.setState({
-          showPreview: this.cameraEnable,
-        });
+          cameraEnable: !this.state.cameraEnable
+        })
       });
   }
   // Switch microphone
-  enableMic() {
+  toggleMic() {
     ZegoExpressManager.instance()
-      .enableMic(!this.micEnable)
+      .enableMic(!this.state.micEnable)
       .then(() => {
-        this.micEnable = !this.micEnable;
+        this.setState({
+          micEnable: !this.state.micEnable
+        })
       });
+  }
+  toggleSpeaker() {
+    ZegoExpressManager.instance().enableSpeaker(!this.state.speakerEnable).then(() => {
+      this.setState({
+        speakerEnable: !this.state.speakerEnable
+      })
+    })
   }
   async joinRoom() {
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
         this.token,
-        {userID: this.userID, userName: this.userName},
+        { userID: this.userID, userName: this.userName },
         [
           ZegoMediaOptions.PublishLocalAudio,
-          ZegoMediaOptions.PublishLocalVideo,
           ZegoMediaOptions.AutoPlayAudio,
-          ZegoMediaOptions.AutoPlayVideo,
         ],
       )
       .then(result => {
         if (result) {
           console.warn('Login successful');
-          ZegoExpressManager.instance().setLocalVideoView(
-            findNodeHandle(this.localViewRef.current),
-          );
         } else {
           console.warn('Login failed!', result);
         }
@@ -293,25 +291,16 @@ export default class CallPage extends Component {
   render() {
     return (
       <View style={[styles.callPage, styles.showPage]}>
-        <View style={[styles.preview, styles.showPreviewView]}>
-          <ZegoTextureView
-            ref={this.localViewRef}
-            // @ts-ignore
-            style={styles.previewView}
-          />
-        </View>
-        <View style={[styles.play, styles.showPlayView]}>
-          <ZegoTextureView
-            ref={this.remoteViewRef}
-            // @ts-ignore
-            style={styles.playView}
-          />
+        <View style={[styles.remoteView, styles.showPreviewView]}>
+          <Text style={styles.remoteName}>{this.state.remoteUserName}</Text>
         </View>
         <View style={styles.btnCon}>
           <TouchableOpacity
             style={styles.micCon}
-            onPress={this.enableMic.bind(this)}>
-            <Image style={styles.image} source={require('../img/mic.png')} />
+            onPress={this.toggleMic.bind(this)}>
+            {
+              this.state.micEnable ? <Image style={styles.image} source={require('../img/mic.png')} /> : <Image style={styles.image} source={require('../img/mic_off.png')} />
+            }
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.phoneCon}
@@ -323,8 +312,8 @@ export default class CallPage extends Component {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.cameraCon}
-            onPress={this.enableCamera.bind(this)}>
-            <Image style={styles.image} source={require('../img/camera.png')} />
+            onPress={this.toggleSpeaker.bind(this)}>
+            <Image style={styles.image} source={this.state.speakerEnable ? require('../img/speaker.png') : require('../img/speaker_off.png')} />
           </TouchableOpacity>
         </View>
       </View>
