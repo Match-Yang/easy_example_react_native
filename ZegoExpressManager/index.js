@@ -170,7 +170,13 @@ var ZegoExpressManager = /** @class */ (function () {
         return zego_express_engine_reactnative_1["default"].instance()
             .muteMicrophone(!enable)
             .then(function () {
-            console.warn('ZEGO RN LOG - muteMicrophone success', !enable);
+            console.warn('ZEGO RN LOG - enableMic success', enable);
+        });
+    };
+    ZegoExpressManager.prototype.enableSpeaker = function (enable) {
+        this.localParticipant.speaker = enable;
+        return zego_express_engine_reactnative_1["default"].instance().muteSpeaker(!enable).then(function () {
+            console.warn('[ZEGOCLOUD LOG][Manager][enableSpeaker] - Enable success', enable);
         });
     };
     /// Set the tag value of ref control which can obtain by findNodeHandle method to render your own video

@@ -31,6 +31,7 @@ export interface ZegoParticipant {
   streamID: string;
   camera: boolean;
   mic: boolean;
+  speaker: boolean;
   renderView: number;
   playQuality: ZegoStreamQualityLevel;
   publishQuality: ZegoStreamQualityLevel;
