@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 40,
-    // backgroundColor: 'gainsboro',
+    backgroundColor: 'gainsboro',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 40,
-    // backgroundColor: 'gainsboro',
+    backgroundColor: 'gainsboro',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: '50%',
+    height: '50%',
   },
   phoneImage: {
     width: 35,
@@ -134,6 +134,7 @@ export default class CallPage extends Component {
   state = {
     cameraEnable: true,
     micEnable: true,
+    speakerEnable: true,
   };
 
   componentDidMount() {
@@ -232,23 +233,33 @@ export default class CallPage extends Component {
     }
   }
   // Switch camera
-  enableCamera() {
+  toggleCamera() {
     ZegoExpressManager.instance()
-      .enableCamera(!this.cameraEnable)
+      .enableCamera(!this.state.cameraEnable)
       .then(() => {
-        this.cameraEnable = !this.cameraEnable;
         this.setState({
-          showPreview: this.cameraEnable,
+          cameraEnable: !this.state.cameraEnable
         });
       });
   }
   // Switch microphone
-  enableMic() {
+  toggleMic() {
     ZegoExpressManager.instance()
-      .enableMic(!this.micEnable)
+      .enableMic(!this.state.micEnable)
       .then(() => {
-        this.micEnable = !this.micEnable;
+        this.setState({
+          micEnable: !this.state.micEnable
+        });
       });
+  }
+  toggleSpeaker() {
+    ZegoExpressManager.instance()
+    .enableSpeaker(!this.state.speakerEnable)
+    .then(() => {
+      this.setState({
+        speakerEnable: !this.state.speakerEnable
+      });
+    });
   }
   async joinRoom() {
     ZegoExpressManager.instance()
@@ -310,8 +321,8 @@ export default class CallPage extends Component {
         <View style={styles.btnCon}>
           <TouchableOpacity
             style={styles.micCon}
-            onPress={this.enableMic.bind(this)}>
-            <Image style={styles.image} source={require('../img/mic.png')} />
+            onPress={this.toggleMic.bind(this)}>
+            <Image style={styles.image} source={this.state.micEnable ? require('../img/mic.png') : require('../img/mic_off.png')} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.phoneCon}
@@ -323,8 +334,8 @@ export default class CallPage extends Component {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.cameraCon}
-            onPress={this.enableCamera.bind(this)}>
-            <Image style={styles.image} source={require('../img/camera.png')} />
+            onPress={this.toggleCamera.bind(this)}>
+            <Image style={styles.image} source={this.state.cameraEnable ? require('../img/camera.png') : require('../img/camera_off.png')} />
           </TouchableOpacity>
         </View>
       </View>
