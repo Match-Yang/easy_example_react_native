@@ -519,16 +519,20 @@ export class ZegoExpressManager {
       this.mediaOptions.includes(ZegoMediaOptions.AutoPlayVideo)
     ) {
       const participant = this.participantDic.get(userID);
-      if (participant && participant.streamID && participant.renderView) {
-        const zegoView = new ZegoView(
-          participant.renderView,
-          ZegoViewMode.AspectFit,
-          0,
-        );
-        ZegoExpressEngine.instance().startPlayingStream(
-          participant.streamID,
-          zegoView,
-        );
+      if (participant && participant.streamID) {
+        if (participant.renderView) {
+          const zegoView = new ZegoView(
+            participant.renderView,
+            ZegoViewMode.AspectFill,
+            0,
+          );
+          ZegoExpressEngine.instance().startPlayingStream(
+            participant.streamID,
+            zegoView,
+          );
+        } else {
+          ZegoExpressEngine.instance().startPlayingStream(participant.streamID);
+        }
         ZegoExpressEngine.instance().mutePlayStreamAudio(
           participant.streamID,
           !this.mediaOptions.includes(ZegoMediaOptions.AutoPlayAudio),
