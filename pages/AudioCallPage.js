@@ -1,130 +1,35 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
-  Button,
-  TextInput,
   PermissionsAndroid,
   Platform,
   StyleSheet,
   Text,
   View,
-  findNodeHandle,
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
+import { Actions } from 'react-native-router-flux';
 
 import ZegoExpressEngine, {
-  ZegoTextureView,
   ZegoScenario,
   ZegoUpdateType,
 } from 'zego-express-engine-reactnative';
-import {ZegoExpressManager} from '../ZegoExpressManager';
-import {ZegoMediaOptions} from '../ZegoExpressManager/index.entity';
+import { ZegoExpressManager } from '../ZegoExpressManager';
+import { ZegoMediaOptions } from '../ZegoExpressManager/index.entity';
 
-const styles = StyleSheet.create({
-  // ZegoEasyExample
-  callPage: {
-    width: '100%',
-    height: '100%',
-  },
-  showPage: {
-    display: 'flex',
-  },
-  showPreviewView: {
-    display: 'flex',
-    opacity: 1,
-  },
-  showPlayView: {
-    display: 'flex',
-    opacity: 1,
-  },
-  preview: {
-    width: '100%',
-    height: '100%',
-  },
-  previewView: {
-    width: '100%',
-    height: '100%',
-  },
-  play: {
-    height: '25%',
-    width: '40%',
-    position: 'absolute',
-    top: 80,
-    right: 20,
-    zIndex: 2,
-  },
-  playView: {
-    width: '100%',
-    height: '100%',
-  },
-  btnCon: {
-    width: '100%',
-    position: 'absolute',
-    display: 'flex',
-    bottom: 40,
-    zIndex: 3,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  phoneCon: {
-    width: 60,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: 'red',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    marginLeft: 10,
-  },
-  cameraCon: {
-    width: 60,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: 'gainsboro',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    marginLeft: 10,
-  },
-  micCon: {
-    width: 60,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: 'gainsboro',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    marginLeft: 10,
-  },
-  image: {
-    width: '50%',
-    height: '50%',
-  },
-  phoneImage: {
-    width: 35,
-    height: 35,
-  },
-});
 
-/// CallPage use for display the Caller Video view and the Callee Video view
+/// AudioCallPage use for display Callee info and control buttons
 ///
 /// TODO You can copy the completed class to your project
-export default class CallPage extends Component {
-  localViewRef;
-  remoteViewRef;
+export default class AudioCallPage extends Component {
   appID;
   token;
   roomID;
   userID;
   userName;
+  remoteUserName;
   constructor(props) {
     super(props);
-    this.localViewRef = React.createRef();
-    this.remoteViewRef = React.createRef();
     this.appID = parseInt(props.appID);
     this.token = props.token;
     this.roomID = props.roomID;
@@ -167,10 +72,9 @@ export default class CallPage extends Component {
         console.warn('out roomUserUpdate', updateType, userList, roomID);
         if (updateType == ZegoUpdateType.Add) {
           userList.forEach(userID => {
-            ZegoExpressManager.instance().setRemoteVideoView(
-              userID,
-              findNodeHandle(this.remoteViewRef.current),
-            );
+            this.setState({
+              remoteUserName: userID
+            })
           });
         }
       },
@@ -239,7 +143,7 @@ export default class CallPage extends Component {
       .then(() => {
         this.setState({
           cameraEnable: !this.state.cameraEnable
-        });
+        })
       });
   }
   // Switch microphone
@@ -249,37 +153,30 @@ export default class CallPage extends Component {
       .then(() => {
         this.setState({
           micEnable: !this.state.micEnable
-        });
+        })
       });
   }
   toggleSpeaker() {
-    ZegoExpressManager.instance()
-    .enableSpeaker(!this.state.speakerEnable)
-    .then(() => {
+    ZegoExpressManager.instance().enableSpeaker(!this.state.speakerEnable).then(() => {
       this.setState({
         speakerEnable: !this.state.speakerEnable
-      });
-    });
+      })
+    })
   }
   async joinRoom() {
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
         this.token,
-        {userID: this.userID, userName: this.userName},
+        { userID: this.userID, userName: this.userName },
         [
           ZegoMediaOptions.PublishLocalAudio,
-          ZegoMediaOptions.PublishLocalVideo,
           ZegoMediaOptions.AutoPlayAudio,
-          ZegoMediaOptions.AutoPlayVideo,
         ],
       )
       .then(result => {
         if (result) {
           console.warn('Login successful');
-          ZegoExpressManager.instance().setLocalVideoView(
-            findNodeHandle(this.localViewRef.current),
-          );
         } else {
           console.warn('Login failed!', result);
         }
@@ -304,25 +201,16 @@ export default class CallPage extends Component {
   render() {
     return (
       <View style={[styles.callPage, styles.showPage]}>
-        <View style={[styles.preview, styles.showPreviewView]}>
-          <ZegoTextureView
-            ref={this.localViewRef}
-            // @ts-ignore
-            style={styles.previewView}
-          />
-        </View>
-        <View style={[styles.play, styles.showPlayView]}>
-          <ZegoTextureView
-            ref={this.remoteViewRef}
-            // @ts-ignore
-            style={styles.playView}
-          />
+        <View style={[styles.remoteView, styles.showPreviewView]}>
+          <Text style={styles.remoteName}>{this.state.remoteUserName}</Text>
         </View>
         <View style={styles.btnCon}>
           <TouchableOpacity
             style={styles.micCon}
             onPress={this.toggleMic.bind(this)}>
-            <Image style={styles.image} source={this.state.micEnable ? require('../img/mic.png') : require('../img/mic_off.png')} />
+            {
+              this.state.micEnable ? <Image style={styles.image} source={require('../img/mic.png')} /> : <Image style={styles.image} source={require('../img/mic_off.png')} />
+            }
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.phoneCon}
@@ -334,11 +222,98 @@ export default class CallPage extends Component {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.cameraCon}
-            onPress={this.toggleCamera.bind(this)}>
-            <Image style={styles.image} source={this.state.cameraEnable ? require('../img/camera.png') : require('../img/camera_off.png')} />
+            onPress={this.toggleSpeaker.bind(this)}>
+            <Image style={styles.image} source={this.state.speakerEnable ? require('../img/speaker.png') : require('../img/speaker_off.png')} />
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+    // ZegoEasyExample
+    callPage: {
+      width: '100%',
+      height: '100%',
+    },
+    showPage: {
+      display: 'flex',
+    },
+    showPreviewView: {
+      display: 'flex',
+      opacity: 1,
+    },
+    showPlayView: {
+      display: 'flex',
+      opacity: 1,
+    },
+    preview: {
+      width: '100%',
+      height: '100%',
+    },
+    remoteView: {
+      width: '100%',
+      height: '100%',
+    },
+    playView: {
+      width: '100%',
+      height: '100%',
+    },
+    btnCon: {
+      width: '100%',
+      position: 'absolute',
+      display: 'flex',
+      bottom: 40,
+      zIndex: 3,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    phoneCon: {
+      width: 60,
+      height: 60,
+      borderRadius: 40,
+      backgroundColor: 'red',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
+      marginLeft: 10,
+    },
+    cameraCon: {
+      width: 60,
+      height: 60,
+      borderRadius: 40,
+      backgroundColor: 'gainsboro',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
+      marginLeft: 10,
+    },
+    micCon: {
+      width: 60,
+      height: 60,
+      borderRadius: 40,
+      backgroundColor: 'gainsboro',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
+      marginLeft: 10,
+    },
+    image: {
+      width: '50%',
+      height: '50%',
+    },
+    phoneImage: {
+      width: 35,
+      height: 35,
+    },
+    remoteName: {
+      height: '25%',
+      width: '100%',
+      zIndex: 2,
+      textAlign: 'center',
+    }
+  });
