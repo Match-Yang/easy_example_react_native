@@ -56,12 +56,12 @@ export default class VideoCallPage extends Component {
       appID: this.appID,
       scenario: ZegoScenario.General,
     };
-    ZegoExpressManager.createEngine(profile).then(async () => {
+    ZegoExpressManager.createEngine(profile).then(async engine => {
       console.warn('ZegoExpressEngine created!');
       // Clear previously registered callbacks
       this.unRegisterCallback();
       // Register callback
-      this.registerCallback();
+      this.registerCallback(engine);
 
       // Join room and wait...
       this.joinRoom();
@@ -70,7 +70,7 @@ export default class VideoCallPage extends Component {
   componentWillUnmount() {
     this.leaveRoom();
   }
-  registerCallback() {
+  registerCallback(engin) {
     // When other user join in the same room, this method will get call
     // Read more doc: https://doc-en-api.zego.im/ReactNative/interfaces/_zegoexpresseventhandler_.zegoeventlistener.html#roomuserupdate
     ZegoExpressManager.instance().onRoomUserUpdate(
@@ -100,6 +100,9 @@ export default class VideoCallPage extends Component {
     );
     ZegoExpressManager.instance().onRoomStateUpdate(state => {
       console.warn('out roomStateUpdate', state);
+    });
+    engin.on('roomOnlineUserCountUpdate', (roomID, count) => {
+      console.warn('roomOnlineUserCountUpdate', count);
     });
   }
   unRegisterCallback() {
@@ -149,7 +152,7 @@ export default class VideoCallPage extends Component {
       .enableCamera(!this.state.cameraEnable)
       .then(() => {
         this.setState({
-          cameraEnable: !this.state.cameraEnable
+          cameraEnable: !this.state.cameraEnable,
         });
       });
   }
@@ -159,18 +162,18 @@ export default class VideoCallPage extends Component {
       .enableMic(!this.state.micEnable)
       .then(() => {
         this.setState({
-          micEnable: !this.state.micEnable
+          micEnable: !this.state.micEnable,
         });
       });
   }
   toggleSpeaker() {
     ZegoExpressManager.instance()
-    .enableSpeaker(!this.state.speakerEnable)
-    .then(() => {
-      this.setState({
-        speakerEnable: !this.state.speakerEnable
+      .enableSpeaker(!this.state.speakerEnable)
+      .then(() => {
+        this.setState({
+          speakerEnable: !this.state.speakerEnable,
+        });
       });
-    });
   }
   async joinRoom() {
     ZegoExpressManager.instance()
@@ -233,7 +236,14 @@ export default class VideoCallPage extends Component {
           <TouchableOpacity
             style={styles.micCon}
             onPress={this.toggleMic.bind(this)}>
-            <Image style={styles.image} source={this.state.micEnable ? require('../img/mic.png') : require('../img/mic_off.png')} />
+            <Image
+              style={styles.image}
+              source={
+                this.state.micEnable
+                  ? require('../img/mic.png')
+                  : require('../img/mic_off.png')
+              }
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.phoneCon}
@@ -246,7 +256,14 @@ export default class VideoCallPage extends Component {
           <TouchableOpacity
             style={styles.cameraCon}
             onPress={this.toggleCamera.bind(this)}>
-            <Image style={styles.image} source={this.state.cameraEnable ? require('../img/camera.png') : require('../img/camera_off.png')} />
+            <Image
+              style={styles.image}
+              source={
+                this.state.cameraEnable
+                  ? require('../img/camera.png')
+                  : require('../img/camera_off.png')
+              }
+            />
           </TouchableOpacity>
         </View>
       </View>
