@@ -23,7 +23,7 @@ import { ZegoMediaOptions } from '../ZegoExpressManager/index.entity';
 /// TODO You can copy the completed class to your project
 export default class AudioCallPage extends Component {
   appID;
-  token;
+  appSign;
   roomID;
   userID;
   userName;
@@ -31,7 +31,7 @@ export default class AudioCallPage extends Component {
   constructor(props) {
     super(props);
     this.appID = parseInt(props.appID);
-    this.token = props.token;
+    this.appSign = props.appSign;
     this.roomID = props.roomID;
     this.userID = props.userID;
     this.userName = props.userName;
@@ -48,6 +48,7 @@ export default class AudioCallPage extends Component {
     console.warn('init SDK');
     const profile = {
       appID: this.appID,
+      appSign: this.appSign,
       scenario: ZegoScenario.General,
     };
     ZegoExpressManager.createEngine(profile).then(async () => {
@@ -84,13 +85,6 @@ export default class AudioCallPage extends Component {
         console.warn('out roomUserDeviceUpdate', updateType, userID, roomID);
       },
     );
-    ZegoExpressManager.instance().onRoomTokenWillExpire(
-      async (roomID, remainTimeInSecond) => {
-        console.warn('out roomTokenWillExpire', roomID, remainTimeInSecond);
-        const token = (await this.generateToken()).token;
-        ZegoExpressEngine.instance().renewToken(roomID, token);
-      },
-    );
     ZegoExpressManager.instance().onRoomStateUpdate(state => {
       console.warn('out roomStateUpdate', state);
     });
@@ -99,7 +93,6 @@ export default class AudioCallPage extends Component {
     // If the parameter is null, the previously registered callback is cleared
     ZegoExpressManager.instance().onRoomUserUpdate();
     ZegoExpressManager.instance().onRoomUserDeviceUpdate();
-    ZegoExpressManager.instance().onRoomTokenWillExpire();
     ZegoExpressManager.instance().onRoomStateUpdate();
   }
   async grantPermissions() {
@@ -167,7 +160,6 @@ export default class AudioCallPage extends Component {
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
-        this.token,
         { userID: this.userID, userName: this.userName },
         [
           ZegoMediaOptions.PublishLocalAudio,

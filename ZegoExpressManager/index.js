@@ -56,7 +56,6 @@ var ZegoExpressManager = /** @class */ (function () {
         this.mediaOptions = [];
         this.deviceUpdateCallback = [];
         this.roomStateUpdateCallback = [];
-        this.roomTokenWillExpireCallback = [];
         this.roomUserUpdateCallback = [];
         this.broadcastMessageRecvCallback = [];
         this.onOtherEventSwitch = false;
@@ -93,7 +92,6 @@ var ZegoExpressManager = /** @class */ (function () {
         return zego_express_engine_reactnative_1["default"].destroyEngine().then(function () {
             ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
             ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
-            ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
             ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
             ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
             // @ts-ignore
@@ -108,12 +106,8 @@ var ZegoExpressManager = /** @class */ (function () {
     /// Live Streaming: - audience:[ZegoMediaOption.autoPlayVideo, ZegoMediaOption.autoPlayAudio]
     /// Chat Room: - host:[ZegoMediaOption.autoPlayAudio, ZegoMediaOption.publishLocalAudio]
     /// Chat Room: - audience:[ZegoMediaOption.autoPlayAudio]
-    ZegoExpressManager.prototype.joinRoom = function (roomID, token, user, options) {
+    ZegoExpressManager.prototype.joinRoom = function (roomID, user, options) {
         var _this = this;
-        if (!token) {
-            console.error('[ZEGOCLOUD LOG][Manager][joinRoom] - Token is empty, please enter a right token');
-            return Promise.resolve(false);
-        }
         if (!options) {
             console.error('[ZEGOCLOUD LOG][Manager][joinRoom] - Options is empty, please enter a right options');
             return Promise.resolve(false);
@@ -125,7 +119,7 @@ var ZegoExpressManager = /** @class */ (function () {
         this.localParticipant.streamID = this.generateStreamID(user.userID, roomID);
         this.participantDic.set(this.localParticipant.userID, this.localParticipant);
         this.streamDic.set(this.localParticipant.streamID, this.localParticipant);
-        var roomConfig = new zego_express_engine_reactnative_1.ZegoRoomConfig(0, true, token);
+        var roomConfig = new zego_express_engine_reactnative_1.ZegoRoomConfig(0, true, "");
         return zego_express_engine_reactnative_1["default"].instance()
             .loginRoom(roomID, user, roomConfig)
             .then(function () { return __awaiter(_this, void 0, void 0, function () {
@@ -250,14 +244,6 @@ var ZegoExpressManager = /** @class */ (function () {
             console.warn('[ZEGOCLOUD LOG][Manager][logoutRoom] - Logout success');
         });
     };
-    /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
-    ZegoExpressManager.prototype.renewToken = function (roomID, token) {
-        return zego_express_engine_reactnative_1["default"].instance()
-            .renewToken(roomID, token)
-            .then(function () {
-            console.warn('ZEGO RN LOG - renewToken success');
-        });
-    };
     /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
     ZegoExpressManager.prototype.onRoomUserUpdate = function (fun) {
         // If the parameter is null, the previously registered callback is cleared
@@ -277,16 +263,6 @@ var ZegoExpressManager = /** @class */ (function () {
         }
         else {
             this.deviceUpdateCallback.length = 0;
-        }
-    };
-    /// Trigger when the access token will expire which mean you should call renewToken to set new token
-    ZegoExpressManager.prototype.onRoomTokenWillExpire = function (fun) {
-        // If the parameter is null, the previously registered callback is cleared
-        if (fun) {
-            this.roomTokenWillExpireCallback.push(fun);
-        }
-        else {
-            this.roomTokenWillExpireCallback.length = 0;
         }
     };
     /// Trigger when room's status has been update
@@ -433,12 +409,6 @@ var ZegoExpressManager = /** @class */ (function () {
                 fun(state);
             });
         });
-        zego_express_engine_reactnative_1["default"].instance().on('roomTokenWillExpire', function (roomID, remainTimeInSecond) {
-            console.warn('[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]', roomID, remainTimeInSecond);
-            _this.roomTokenWillExpireCallback.forEach(function (fun) {
-                fun(roomID, remainTimeInSecond);
-            });
-        });
         zego_express_engine_reactnative_1["default"].instance().on('IMRecvBroadcastMessage', function (roomID, chatData) {
             console.warn('[ZEGOCLOUD LOG][Manager][IMRecvBroadcastMessage]', roomID, chatData);
             var msgList = chatData.map(function (item) {
@@ -457,7 +427,6 @@ var ZegoExpressManager = /** @class */ (function () {
         zego_express_engine_reactnative_1["default"].instance().off('remoteCameraStateUpdate');
         zego_express_engine_reactnative_1["default"].instance().off('remoteMicStateUpdate');
         zego_express_engine_reactnative_1["default"].instance().off('roomStateUpdate');
-        zego_express_engine_reactnative_1["default"].instance().off('roomTokenWillExpire');
         zego_express_engine_reactnative_1["default"].instance().off('IMRecvBroadcastMessage');
     };
     ZegoExpressManager.prototype.playStream = function (userID) {

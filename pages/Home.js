@@ -12,13 +12,9 @@ import { Actions } from 'react-native-router-flux';
 
 const now = new Date().getTime();
 const config = {
-  // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
+  // Get your AppID and AppSign from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
   appID: ,
-  // Heroku server url for example
-  // Heroku server url for example
-  // Get the server from: https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs
-  // e.g. https://xxx.herokuapp.com
-  tokerServerUrl: ,
+  appSign: ,
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: '123456',
@@ -30,11 +26,10 @@ export default class Home extends Component {
   }
 
   async startCall(isVideoCall) {
-    var tokenObj = await this.generateToken();
     if (isVideoCall) {
       Actions.videoCall({
         appID: config.appID,
-        token: tokenObj.token,
+        appSign: config.appSign,
         roomID: config.roomID,
         userID: config.userID,
         userName: config.userName,
@@ -42,7 +37,7 @@ export default class Home extends Component {
     } else {
       Actions.audioCall({
         appID: config.appID,
-        token: tokenObj.token,
+        appSign: config.appSign,
         roomID: config.roomID,
         userID: config.userID,
         userName: config.userName,
@@ -50,15 +45,7 @@ export default class Home extends Component {
     }
 
   }
-  generateToken() {
-    // Obtain the token interface provided by the App Server
-    return fetch(`${config.tokerServerUrl}/access_token?uid=${config.userID}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-    }).then(data => data.json());
-  }
+  
   render() {
     return (
       <View style={[styles.homePage, styles.showPage]}>

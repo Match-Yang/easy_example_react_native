@@ -47,17 +47,7 @@ Clone the easy example Github repository.
 
 #### Modify the project configurations
 
-* You need to modify `appID` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
-* [Generate a Token on your app server (recommended)](https://docs.zegocloud.com/article/11648), provide an interface for the client to call and replace the generateToken method above.
-
-> If you are using Heroku for your backen service, you can deploy the token generation service by one click.
->
-> [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs)
->
-> Once done you will get an url for your instance, try accessing `https://<heroku url>/access_token?uid=1234` to check if it works.
-> 
-> Check [dynamic_token_server_nodejs](https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs) for more details.
-
+* You need to modify `appID` and `appSign` to your own account, which can be obtained in the [ZEGO Admin Console](https://console.zegocloud.com/).
 
 > ![config](media/init.jpg)
 
@@ -165,7 +155,7 @@ You need to grant the network access, camera, and microphone permission to make 
 ### Method call
 
 The calling sequence of the SDK interface is as follows:
-createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate、onRoomTokenWillExpire --> joinRoom --> setLocalVideoView/setRemoteVideoView --> leaveRoom
+createEngine --> onRoomUserUpdate、onRoomUserDeviceUpdate --> joinRoom --> setLocalVideoView/setRemoteVideoView --> leaveRoom
 
 #### Create engine
 
@@ -190,9 +180,6 @@ ZegoExpressManager.instance().onRoomUserUpdate((updateType, userList, roomID) =>
 ZegoExpressManager.instance().onRoomUserDeviceUpdate((updateType, userID, roomID) => {
     // Do something...
 });
-ZegoExpressManager.instance().onRoomTokenWillExpire((roomID, remainTimeInSecond) => {
-    // Do something...
-});
 ```
 
 #### Join room
@@ -210,7 +197,7 @@ ZegoMediaOptions enumeration can be found in ZegoExpressManager/index.entity.ts.
 The following sample code is an example of a call scenario, options can not be passed by default:
 
 ```typescript
-ZegoExpressManager.instance().joinRoom(config.roomID, token, { userID: config.userID, userName: config.userName });
+ZegoExpressManager.instance().joinRoom(config.roomID, { userID: config.userID, userName: config.userName });
 ```
 
 #### Set video view
