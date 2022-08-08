@@ -49,13 +49,9 @@ const styles = StyleSheet.create({
 
 const now = new Date().getTime();
 const config = {
-  // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
+  // Get your AppID and appSign from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
   appID: ,
-  // Heroku server url for example
-  // Heroku server url for example
-  // Get the server from: https://github.com/ZEGOCLOUD/dynamic_token_server_nodejs
-  // e.g. https://xxx.herokuapp.com
-  tokerServerUrl: ,
+  appSign: ,
   userID: 'rn_user_' + now,
   userName: 'rn_user_' + now,
   roomID: '',
@@ -80,24 +76,14 @@ export default class Home extends Component {
     if (!config.roomID) {
       return;
     }
-    const tokenObj = await this.generateToken();
     Actions.live({
       appID: config.appID,
-      token: tokenObj.token,
+      appSign: config.appSign,
       roomID: config.roomID,
       userID: config.userID,
       userName: config.userName,
       isHost: isHost,
     });
-  }
-  generateToken() {
-    // Obtain the token interface provided by the App Server
-    return fetch(`${config.tokerServerUrl}/access_token?uid=${config.userID}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-    }).then(data => data.json());
   }
   render() {
     return (

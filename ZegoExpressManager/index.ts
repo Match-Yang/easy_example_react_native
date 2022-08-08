@@ -43,10 +43,6 @@ export class ZegoExpressManager {
     roomID: string,
   ) => void)[] = [];
   private roomStateUpdateCallback: ((state: ZegoRoomState) => void)[] = [];
-  private roomTokenWillExpireCallback: ((
-    roomID: string,
-    remainTimeInSecond: number,
-  ) => void)[] = [];
   private roomUserUpdateCallback: ((
     updateType: ZegoUpdateType,
     userList: string[],
@@ -104,7 +100,6 @@ export class ZegoExpressManager {
       );
       ZegoExpressManager.shared.deviceUpdateCallback.length = 0;
       ZegoExpressManager.shared.roomStateUpdateCallback.length = 0;
-      ZegoExpressManager.shared.roomTokenWillExpireCallback.length = 0;
       ZegoExpressManager.shared.roomUserUpdateCallback.length = 0;
       ZegoExpressManager.shared.broadcastMessageRecvCallback.length = 0;
       ZegoExpressManager.shared.roomExtraInfoUpdateCallback.length = 0;
@@ -122,16 +117,9 @@ export class ZegoExpressManager {
   /// Chat Room: - audience:[ZegoMediaOption.autoPlayAudio]
   joinRoom(
     roomID: string,
-    token: string,
     user: ZegoUser,
     options: ZegoMediaOptions[],
   ): Promise<boolean> {
-    if (!token) {
-      console.error(
-        '[ZEGOCLOUD LOG][Manager][joinRoom] - Token is empty, please enter a right token',
-      );
-      return Promise.resolve(false);
-    }
     if (!options) {
       console.error(
         '[ZEGOCLOUD LOG][Manager][joinRoom] - Options is empty, please enter a right options',
@@ -151,7 +139,7 @@ export class ZegoExpressManager {
     );
     this.streamDic.set(this.localParticipant.streamID, this.localParticipant);
 
-    const roomConfig = new ZegoRoomConfig(0, true, token);
+    const roomConfig = new ZegoRoomConfig(0, true, '');
     return ZegoExpressEngine.instance()
       .loginRoom(roomID, user, roomConfig)
       .then(async () => {
@@ -333,14 +321,6 @@ export class ZegoExpressManager {
         console.warn('[ZEGOCLOUD LOG][Manager][logoutRoom] - Logout success');
       });
   }
-  /// Set a new token to keep access ZEGOCLOUD's SDK while onRoomTokenWillExpire has been triggered
-  renewToken(roomID: string, token: string): Promise<void> {
-    return ZegoExpressEngine.instance()
-      .renewToken(roomID, token)
-      .then(() => {
-        console.warn('ZEGO RN LOG - renewToken success');
-      });
-  }
   /// When you join in the room it will let you know who is in the room right now with [userIDList] and will let you know who is joining the room or who is leaving after you have joined
   onRoomUserUpdate(
     fun?: (
@@ -369,17 +349,6 @@ export class ZegoExpressManager {
       this.deviceUpdateCallback.push(fun);
     } else {
       this.deviceUpdateCallback.length = 0;
-    }
-  }
-  /// Trigger when the access token will expire which mean you should call renewToken to set new token
-  onRoomTokenWillExpire(
-    fun?: (roomID: string, remainTimeInSecond: number) => void,
-  ) {
-    // If the parameter is null, the previously registered callback is cleared
-    if (fun) {
-      this.roomTokenWillExpireCallback.push(fun);
-    } else {
-      this.roomTokenWillExpireCallback.length = 0;
     }
   }
   /// Trigger when room extra info has been updated by you or others
@@ -598,19 +567,6 @@ export class ZegoExpressManager {
       },
     );
     ZegoExpressEngine.instance().on(
-      'roomTokenWillExpire',
-      (roomID: string, remainTimeInSecond: number) => {
-        console.warn(
-          '[ZEGOCLOUD LOG][Manager][roomTokenWillExpire]',
-          roomID,
-          remainTimeInSecond,
-        );
-        this.roomTokenWillExpireCallback.forEach(fun => {
-          fun(roomID, remainTimeInSecond);
-        });
-      },
-    );
-    ZegoExpressEngine.instance().on(
       'roomExtraInfoUpdate',
       (roomID: string, roomExtraInfoList: ZegoRoomExtraInfo[]) => {
         console.warn(
@@ -648,7 +604,6 @@ export class ZegoExpressManager {
     ZegoExpressEngine.instance().off('remoteCameraStateUpdate');
     ZegoExpressEngine.instance().off('remoteMicStateUpdate');
     ZegoExpressEngine.instance().off('roomStateUpdate');
-    ZegoExpressEngine.instance().off('roomTokenWillExpire');
     ZegoExpressEngine.instance().off('IMRecvBroadcastMessage');
     ZegoExpressEngine.instance().off('roomExtraInfoUpdate');
   }

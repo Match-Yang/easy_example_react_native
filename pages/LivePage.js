@@ -106,7 +106,7 @@ export default class LivePage extends Component {
   hostViewRef;
   coHostViewRef;
   appID;
-  token;
+  appSign;
   roomID;
   userID;
   userName;
@@ -130,7 +130,7 @@ export default class LivePage extends Component {
     this.hostViewRef = React.createRef();
     this.coHostViewRef = React.createRef();
     this.appID = parseInt(props.appID, 10);
-    this.token = props.token;
+    this.appSign = props.appSign;
     this.roomID = props.roomID;
     this.userID = props.userID;
     this.userName = props.userName;
@@ -142,6 +142,7 @@ export default class LivePage extends Component {
     console.warn('init SDK');
     const profile = {
       appID: this.appID,
+      appSign: this.appSign,
       scenario: ZegoScenario.General,
     };
     ZegoExpressManager.createEngine(profile).then(async () => {
@@ -186,13 +187,6 @@ export default class LivePage extends Component {
         console.warn('out roomUserDeviceUpdate', updateType, userID, roomID);
       },
     );
-    ZegoExpressManager.instance().onRoomTokenWillExpire(
-      async (roomID, remainTimeInSecond) => {
-        console.warn('out roomTokenWillExpire', roomID, remainTimeInSecond);
-        const token = (await this.generateToken()).token;
-        ZegoExpressEngine.instance().renewToken(roomID, token);
-      },
-    );
     ZegoExpressManager.instance().onRoomExtraInfoUpdate(roomExtraInfoList => {
       console.warn(
         '[ZEGOCLOUD Log][Demo][onRoomExtraInfoUpdate]',
@@ -230,7 +224,6 @@ export default class LivePage extends Component {
     // If the parameter is null, the previously registered callback is cleared
     ZegoExpressManager.instance().onRoomUserUpdate();
     ZegoExpressManager.instance().onRoomUserDeviceUpdate();
-    ZegoExpressManager.instance().onRoomTokenWillExpire();
     ZegoExpressManager.instance().onRoomExtraInfoUpdate();
     ZegoExpressManager.instance().onRoomStateUpdate();
   }
@@ -283,7 +276,6 @@ export default class LivePage extends Component {
     ZegoExpressManager.instance()
       .joinRoom(
         this.roomID,
-        this.token,
         {userID: this.userID, userName: this.userName},
         options,
       )
