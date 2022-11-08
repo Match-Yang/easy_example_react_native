@@ -697,18 +697,27 @@ var ZegoExpressManager = /** @class */ (function () {
       this.mediaOptions.includes(index_entity_1.ZegoMediaOptions.AutoPlayVideo)
     ) {
       var participant = this.participantDic.get(userID);
-      if (participant && participant.streamID && participant.renderView) {
-        var zegoView = new zego_express_engine_reactnative_1.ZegoView(
-          participant.renderView,
-          zego_express_engine_reactnative_1.ZegoViewMode.AspectFit,
-          0,
-        );
+      if (participant && participant.streamID) {
+        var zegoView;
+        if (participant.renderView) {
+          zegoView = new zego_express_engine_reactnative_1.ZegoView(
+            participant.renderView,
+            zego_express_engine_reactnative_1.ZegoViewMode.AspectFit,
+            0,
+          );
+        }
         console.warn(
           '[ZEGOCLOUD LOG][Manager][playStream] - Start playing stream',
         );
-        zego_express_engine_reactnative_1.default
-          .instance()
-          .startPlayingStream(participant.streamID, zegoView);
+        if (zegoView) {
+          zego_express_engine_reactnative_1.default
+            .instance()
+            .startPlayingStream(participant.streamID, zegoView);
+        } else {
+          zego_express_engine_reactnative_1.default
+            .instance()
+            .startPlayingStream(participant.streamID);
+        }
         zego_express_engine_reactnative_1.default
           .instance()
           .mutePlayStreamAudio(
