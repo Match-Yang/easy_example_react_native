@@ -17,9 +17,8 @@ import notifee, { AuthorizationStatus, EventType, AndroidImportance, AndroidVisi
 const config = {
    // Get your AppID from ZEGOCLOUD Console [My Projects] : https://console.zegocloud.com/project
    appID: ,
-   // Heroku server url for example
-   // Get the server from: https://github.com/ZEGOCLOUD/easy_example_call_server_nodejs
-   // e.g. https://xxx.herokuapp.com
+   // Get the server from: https://github.com/ZEGOCLOUD/easy_server_nextjs
+   // Vecel server url for example 'https://your_vercel_project_name.vercel.app/api'
    serverUrl: 
 }
 ///\/\/\/\/\/\/\/\/\/\/\/\/\ 🔔🔔🔔 READ THIS IF YOU WANT TO DO MORE 🔔🔔🔔 /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
